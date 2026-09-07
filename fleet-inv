@@ -3,9 +3,16 @@
 
   fleet-inv list [--monitored] [--json]
   fleet-inv get <name> [dotted.key]
-  fleet-inv ssh-list
+  fleet-inv ssh-list [--all] [--status a,b] [--maintenance] [--no-crown-jewel] [--exclude-self]
+                     [--self TEXT] [--order name|maint] [--fields f,g,...]
+  fleet-inv plugs        # plug_id<TAB>name<TAB>power — hardware.power_hw.plug_id per machine
   fleet-inv check
   fleet-inv drift        # inventory vs lumen_state — REPORT ONLY, never writes state
+
+ssh-list is the roster feed for the ops scripts (wq#1456): fleet-keymesh, fleet-roll-reboot,
+rotate-fleet-pw read it instead of carrying a NODES list. Default = MONITORED() machines with a
+resolvable user@tailscale_ip; unresolvable ones are reported on stderr, never silently dropped.
+Root: $FLEET_INVENTORY_ROOT overrides the machines/ dir (tests); default = this checkout.
 
 Exit codes: 0 ok · 1 error/invalid · 2 drift found (drift) or name/key missing (get).
 """
@@ -81,16 +88,64 @@ def cmd_get(args):
     return 0
 
 
+SSH_FIELDS = ("name", "target", "user", "host", "tailscale_ip", "lan_ip", "ssh_key", "status",
+              "monitored", "maint_tier")
+
+
+def _ssh_row(name, target, rec, self_marker):
+    net, st = rec.get("network") or {}, rec.get("status") or {}
+    user, _, host = target.partition("@") if "@" in target else ("", "", target)
+    if target == self_marker:
+        user = str((net.get("ssh") or {}).get("user") or "-")
+    tier = inv.maint_tier(rec)
+    return {"name": name, "target": target, "user": user or "-", "host": host or "-",
+            "tailscale_ip": inv._clean(net.get("tailscale_ip")) or "-",
+            "lan_ip": inv._clean(net.get("lan_ip")) or "-",
+            "ssh_key": inv.ssh_key(rec, "-"), "status": st.get("status", "?"),
+            "monitored": "yes" if inv._is_monitored_rec(rec) else "no",
+            "maint_tier": ("%g" % tier) if tier < 6 else "-"}
+
+
 def cmd_ssh_list(args):
     r = _roster(args)
-    rc = 0
-    for rec in inv.monitored(r):
-        name = rec["identity"]["name"]
-        try:
-            print(f"{name}\t{inv.ssh_target(name, r)}")
-        except inv.InventoryError as e:
-            print(f"# {e}", file=sys.stderr)
-    return rc
+    statuses = [s.strip() for s in args.status.split(",") if s.strip()] if args.status else None
+    for s in statuses or ():
+        if s not in inv.STATUS_ENUM:
+            print(f"ERROR --status {s!r} not in {list(inv.STATUS_ENUM)}", file=sys.stderr)
+            return 1
+    fields = [f.strip() for f in args.fields.split(",")] if args.fields else ["name", "target"]
+    for f in fields:
+        if f not in SSH_FIELDS:
+            print(f"ERROR --fields {f!r} not in {list(SSH_FIELDS)}", file=sys.stderr)
+            return 1
+    skipped = []
+    rows = inv.ssh_targets(r, monitored=not args.all, statuses=statuses, maintenance=args.maintenance,
+                           no_crown_jewel=args.no_crown_jewel, exclude_self=args.exclude_self,
+                           local=args.self_marker, skipped=skipped, order=args.order)
+    for name, reason in skipped:
+        print(f"# {reason}", file=sys.stderr)
+    for name, target in rows:
+        row = _ssh_row(name, target, r[name], args.self_marker)
+        print("\t".join(row[f] for f in fields))
+    return 0
+
+
+def cmd_plugs(args):
+    r = _roster(args)
+    try:
+        pm = inv.plug_map(r)
+    except inv.InventoryError as e:
+        print(f"ERROR {e}", file=sys.stderr)
+        return 1
+
+    def _k(pid):  # P3 < P10, E1 after P*
+        m = re.match(r"([A-Za-z]+)(\d+)$", pid)
+        return (m.group(1) != "P", m.group(1), int(m.group(2))) if m else (True, pid, 0)
+
+    for pid in sorted(pm, key=_k):
+        st = r[pm[pid]].get("status") or {}
+        print(f"{pid}\t{pm[pid]}\t{st.get('power', '-')}")
+    return 0
 
 
 def cmd_check(args):
@@ -192,8 +247,21 @@ def main(argv=None):
     p.add_argument("name")
     p.add_argument("key", nargs="?")
     p.set_defaults(fn=cmd_get)
-    p = sub.add_parser("ssh-list", help="name<TAB>user@tailscale_ip for every monitored machine")
+    p = sub.add_parser("ssh-list", help="name<TAB>user@tailscale_ip for every monitored machine (roster feed)")
+    p.add_argument("--all", action="store_true", help="every status, not just MONITORED() (pair with --status)")
+    p.add_argument("--status", metavar="A,B", help="keep only these status.status values")
+    p.add_argument("--maintenance", action="store_true",
+                   help="drop governance.never_restart nodes (Thor) — for tooling that updates/reboots")
+    p.add_argument("--no-crown-jewel", action="store_true", help="drop governance.crown_jewel nodes")
+    p.add_argument("--exclude-self", action="store_true", help="drop the machine this runs on")
+    p.add_argument("--self", dest="self_marker", metavar="TEXT",
+                   help="print TEXT as the target of the machine this runs on (e.g. LOCAL)")
+    p.add_argument("--order", choices=("name", "maint"), default="name",
+                   help="maint = by ops.maint_tier then name (A11 §5 ordering law)")
+    p.add_argument("--fields", metavar="F,G", help="tab-separated columns: " + ",".join(SSH_FIELDS))
     p.set_defaults(fn=cmd_ssh_list)
+    p = sub.add_parser("plugs", help="plug_id<TAB>name<TAB>power from hardware.power_hw.plug_id")
+    p.set_defaults(fn=cmd_plugs)
     p = sub.add_parser("check", help="validate every machines/*.yaml; refresh last-good on success")
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("drift", help="compare tailscale_ip/lan_ip/ssh user vs lumen_state (report only)")

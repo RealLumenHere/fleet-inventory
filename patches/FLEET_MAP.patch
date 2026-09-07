@@ -1,0 +1,57 @@
+--- /home/lumen/FLEET_MAP.md
++++ /home/lumen/FLEET_MAP.md (inventory-derived)
+@@ -11,20 +11,42 @@
+ 
+ ## Core fleet — Egyptian pantheon
+ 
++<!-- BEGIN inventory-generated roster (do not hand-edit — run: python3 /home/lumen/fleet/inventory/render.py --md --update /home/lumen/FLEET_MAP.md) -->
++_Derived from `/home/lumen/fleet/inventory/machines/*.yaml` on 2026-09-07: 25 machines, 15 monitored. Edit the YAML, not this table; `fleet-inv list` shows the same data._
++
++| Node | Status | Make / model | Roles | Tailscale IP | LAN IP | Notes |
++|---|---|---|---|---|---|---|
++| 3dprinter (argus) | [DEPLOYED] | LG 24CQ650I-6N all-in-one | 3d-print-server | 100.114.82.85 | VERIFY | - |
++| anubis | [DEPLOYED] | VERIFY | gitea, backup | 100.121.17.5 | 192.168.8.232 | - |
++| apep | [DEPLOYED] | Whitebox Apollo Lake mini-PC (AMI board 'Apollolake', no OEM branding) | test-station | 100.82.2.72 | 192.168.0.161 | - |
++| be3600 (slate7, workbench-router) | [DEPLOYED] active, unmonitored | GL.iNet Slate 7 (GL-BE3600) | router | 100.81.177.14 | VERIFY | monitor: false |
++| bes | [DEPLOYED] | VERIFY | home-assistant, awareness-watchdog, grafana, vault-standby, pg-standby, mcp-failover | 100.110.156.91 | 192.168.8.177 | - |
++| gameboy (kiosk) | [DEPLOYED] | Microsoft Surface Pro 6 | pokemon-kiosk | 100.118.56.59 | 192.168.8.190 | - |
++| isis | [DEPLOYED] | VERIFY | worker, inference | 100.100.129.24 | 192.168.8.171 | - |
++| lumen | [DEPLOYED] | Dell Precision T5810 | orchestrator-host, ai-services, litellm-gateway, dispatcher, minerva, commander-mcp | 100.117.66.102 | 192.168.8.160 | crown_jewel |
++| maat (Ma'at) | [DEPLOYED] | mini-PC (WeiBu ADL-N board) | vault, ha-primary, pg-primary | 100.105.219.34 | 192.168.8.202 | crown_jewel |
++| phone | [DEPLOYED] | Samsung Galaxy S26 Ultra | phone | 100.67.171.124 | VERIFY | - |
++| seshat | [DEPLOYED] | Seneca PRO925430 mini PC | nextcloud | 100.121.243.124 | 192.168.8.219 | - |
++| sia | [DEPLOYED] | VERIFY | worker | 100.111.15.120 | 192.168.8.174 | - |
++| sobek | [DEPLOYED] | VERIFY | vault-standby, pg-standby | 100.86.156.91 | 192.168.8.178 | - |
++| thor (Samsung, the reinstalled Samsung) | [DEPLOYED] | Samsung Galaxy Book Pro 360 (laptop) | workstation, system-tts, ccc-host | 100.112.151.100 | 192.168.8.132 | never_restart |
++| thoth | [DEPLOYED] | Seneca MP mini PC | media, torrent | 100.75.1.108 | 192.168.8.218 | - |
++| toilet | [DEPLOYED] active, unmonitored | VERIFY | - | 100.70.94.19 | 192.168.50.111 | monitor: false |
++| hathor | [DEPLOYED-BUT-OFFLINE] standby | VERIFY | inference | 100.80.71.13 | 192.168.8.172 | monitor: false |
++| wadjet | [DEPLOYED-BUT-OFFLINE] standby | VERIFY | - | 100.116.217.15 | 192.168.8.173 | monitor: false |
++| aten | [DEPLOYED-BUT-OFFLINE] bench | Lenovo Yoga 730-13IKB (laptop) | firmware-workstation | - | - | monitor: false |
++| hapi-1 (hapi, bc250-blade-1) | [DEPLOYED-BUT-OFFLINE] bench | ASRock 4U12G chassis — AMD BC-250 blade | inference | VERIFY | VERIFY | monitor: false |
++| khepri | [DEPLOYED] bench | VERIFY | staging | 100.120.16.78 | 192.168.8.211 | - |
++| mirror | [DECOMMISSIONED] 2026-08-28 | Microsoft Surface Go 2 | - | - | - | Frank 2026-08-28: removed from fleet. Was the only Windows box (RTDTool bare-metal for RTD/Screenpad firmware work). |
++| nephthys | [DECOMMISSIONED] 2026-08-22 | Apple Mac Pro 6,1 (trashcan) | - | 100.98.74.87 | 192.168.8.176 | wq#589 — roles rehomed to Bes; powered down, plug P2 cut. ~85W saved. |
++| pbox | [DECOMMISSIONED] 2026-08-28 | VERIFY (Win11 gaming box) | - | 100.68.189.7 | - | Frank 2026-08-28: removed from fleet. Already retired from fleet/inference duty; was a BGB-interop client. |
++| apis | [RETIRED] dead | VERIFY | - | 100.89.147.95 | 192.168.0.72 | - |
++<!-- END inventory-generated roster -->
++
++_Not yet in the inventory (hand-kept until the box gets a canonical name and a `machines/<name>.yaml`):_
++
+ | Node | Hardware | Role | Status |
+ |---|---|---|---|
+-| Lumen | Dell T5810 (E5-2699 v4) | Primary AI brain · LiteLLM + fleet orchestration | [DEPLOYED] |
+-| Thor | Galaxy Book Pro | Frank's workstation | [DEPLOYED] |
+-| Thoth | Seneca MP — i3-1115G4 | Media/Plex/torrent + storage | [DEPLOYED] |
+-| Seshat | Seneca MP — i3-1115G4 | Nextcloud | [DEPLOYED] — down temporarily ~few hrs (2026-06-17); full specs below |
+-| Nephthys | Mac Pro 6,1 #1 · E5-2697 v2 24T · 64GB DDR3 ECC · 1TB AHCI SSUBX (reads live as APPLE SSD SM1024, /dev/sda) | **[DECOMMISSIONED]** 2026-08-22 wq#589 — awareness+MCP-failover migrated to Bes, ollama rungs retired, powered down, plug P2 cut. 85W/$292yr saved. Was: Awareness + embeddings + MCP failover · Qwen3-14B | [DECOMMISSIONED] 2026-08-22 (was [DEPLOYED] 2026-06-28) — Ubuntu 26.04 (kernel 7.0.0-27), host=nephthys (user `nephthys`, key auth + passwordless sudo). LAN **192.168.8.176** static (netplan enp12s0, MAC 00:3e:e1:cc:4b:17). ufw active (22/tcp+tailscale0), sshd key-only. POWER STACK applied (matches Isis/Hathor): cpu-powercap RAPL PL1=75/PL2=90/bias15 (idle 16.7W, capped 75.7W pkg), gpu-lowpower both D300 amdgpu dpm=low, **GPU-B 02:00.0 NOT gated** (amdgpu-both-bound), wifi/bt/audio/TB blacklisted (unload next boot), BT rfkill-blocked. TS **100.98.74.87** (tag:lumen-fleet, --ssh, accept-routes; joined 2026-06-28 via interactive login — tailscale0 ufw rule live). ✅ **LAN IP FINAL: 192.168.8.176** (.170 triplet plan superseded). ✅ **BootROM RESOLVED**: live firmware = **481.0.0.0.0 (2023-10-07)** = final/latest MacPro6,1 BootROM (no upgrade exists; Apple blocks 6,1 downgrades). Combined with native-AHCI-bootable SM1024, the PROVISION doc's no-reboot premise is fully dissolved — **reboot now unblocked** (Frank's call; next boot realizes module-unload savings). HARD no-reboot honored during provisioning (no reboot performed). ✅ **SERVING (2026-06-28)**: Ollama 0.30.11 (0.0.0.0:11434, OLLAMA_HOST drop-in) — `qwen3:14b` Q4_K_M (4.62 tok/s decode under 75W cap; coherent) + `nomic-embed-text` (768d). LiteLLM gateway aliases **`nephthys-qwen3-14b`** (chat, think:false) + **`nephthys-embed`** (embedding), E2E-verified through localhost:4000; NOT in router fallbacks (no-silent-reroute policy, matches Isis/Hathor). Registered in nodes_config.yaml + sentinel/gatus (ICMP node check, alerting). ⚠️ Role's **awareness-pipeline** + **MCP-failover** components now LIVE (2026-06-28): **awareness-pipeline** = nephthys-awareness.service (reciprocal off-Lumen fleet watchdog — polls Lumen host/dc-gw/messenger/ollama/gatus + Isis/Hathor q60s, edge-triggered alerts to INDEPENDENT sink ntfy.sh/lumen-reciprocal-watch-x7q2 so a full Lumen outage still reaches Frank). **MCP-failover** = nephthys-mcp-failover.service (independent supergateway+desktop-commander on :3100/mcp, stateless, blockedCommands=[] parity w/Lumen, /health=200, MCP handshake verified, rooted at Nephthys own FS). ⚠️ MCP failover is **Tailnet-only direct (http://100.98.74.87:3100/mcp), PLUS ✅ **PUBLIC FAILOVER LIVE + DRILL-VERIFIED (2026-06-29)**: own CF tunnel nephthys-mcp (fea40cd1) → mcp-failover.lumennode.uk (Access-gated, reuses Worker service token e23d092b, aud 57f6e6d4); worker lumen-mcp v062431b3 patched to auto-failover (primary mcp-backend → on 502/503/504/530+exception → Nephthys). DRILL: stopped Lumen dc-gateway, hands rode lumen→nephthys transparently + back on restore; awareness watchdog independently detected+alerted the outage. ntfy.sh topic lumen-reciprocal-watch-x7q2 subscribed (DONE). LAN IP .176 final. |
+-| Isis | Mac Pro 6,1 #2 | Qwen3-32B SERVING via litellm `isis-qwen3-32b` (think:false default, ~2 tok/s decode) · 64GB · TS 100.100.129.24 · LAN 192.168.8.171 | [DEPLOYED] 2026-06-10 |
+-| Hathor | Mac Pro 6,1 #3 · 24T E5-2697v2 · 64GB | Fast-lane chat + embeddings · `hathor-lfm-1b` (LFM2.5-1.2B Q4_K_M, num_thread=24, 48.6 t/s) + nomic-embed-text · TS 100.80.71.13 / LAN .172 · in LiteLLM | [DEPLOYED-BUT-OFFLINE] — powered OFF by Frank 2026-07-18 (wedge pattern x2: boots but network never comes up; prior episode ran to ~231W). QUARANTINED: leave cord UNPLUGGED (AFTERG3 armed = self-starts on AC). Bench root-cause + AFTERG3 disarm required before return. [updated 2026-07-18 23:20 PDT, claude-web] |
+-| Sobek | Trigkey Green G4 — N100 · 16GB · 512GB NVMe (unit-2 of 07-12 pair) | Dedicated vault standby: PG 18.4 streaming replica of Ma'at (sobek_slot) + parked Vaultwarden 1.36.0 promote payload (/opt/sobek-vaultwarden, restart=no) | [DEPLOYED] 2026-07-31 — Ubuntu 26.04, host/user `sobek`, key-only SSH, LAN **192.168.8.178** static (netplan enp1s0), TS **100.86.156.91** (tag:lumen-fleet). ufw 22+tailscale0+8222/LAN. Streaming verified (canary <3s) alongside Bes. POWER: UNMETERED — p5 socket assumption disproven (p5 = untraced steady 78W, suspect Hapi blade). Gatus ICMP check live. [added 2026-07-31 23:2x PDT, claude-web] |
+-| Wadjet | Mac Pro 6,1 #4 — E5-2697 v2 (12C/24T) · 60GB RAM · Apple 512GB SSD | Postgres 18.4 streaming-replica standby of Ma'at + Vaultwarden 1.36.0 standby (auto-promote ARMED) | [DEPLOYED] — 2026-06-24: Ubuntu 26.04, host=wadjet (user `wadjet`), LAN 192.168.8.173 static (enp12s0). TS node 100.116.217.15 / wadjet.tail12fa3b.ts.net (ACTIVE 2026-06-24). PG 18.4 PHYSICAL STREAMING STANDBY of Ma'at over DIRECT LAN (streaming from 192.168.8.202:5432; slot `wadjet_slot`; async; autossh tunnel RETIRED). Ma'at listen_addresses now localhost,192.168.8.202 (gated PG restart done, ~2.4s blip). VW 1.36.0 container STOPPED (restart=no, → LOCAL replica DB, rsa_key seeded identical). PHASE 4 AUTO-PROMOTE LIVE: /home/lumen/bin/wadjet-ha-monitor.sh via wadjet-ha-monitor.timer (30s) probes Ma'at (pg_isready+VW /alive); on ~2-min outage fences Ma'at, pg_promote Wadjet, flips CF vault origin → Wadjet (192.168.8.173:8222), starts Wadjet VW; CF-tunnel-origin = single-writer fence; ntfy alerts; failback MANUAL (/home/lumen/bin/wadjet-ha-failback.sh). State /home/lumen/ha/ (delete AUTO_PROMOTE_ENABLED to disarm). |
+-| Khepri | Mac Pro 6,1 #5 (new) | Experimental/staging tier — break things off-prod | [PLANNED] |
+-| Ma'at | Glotrends MP1 barebone — Intel N100 (4C/4T, up to 3.4GHz, 6W TDP, Alder Lake-N) · 1× DDR4 SO-DIMM slot (max 16GB official, 32GB works in practice) · 1× M.2 2280 NVMe (PCIe 3.0 ×2) · 1× SATA III 2.5" · 1× GbE · barebone (no RAM/storage/WiFi shipped) | Postgres + Vaultwarden primary | [DEPLOYED] — 2026-06-18: Ubuntu 26.04 LTS, host=maat (LOGIN USER = `maam`, ssh maam@), LAN 192.168.8.202 static (enp2s0, +router DHCP reservation), TS 100.105.219.34. 16GB / 512GB NVMe. Postgres 18.4 + Vaultwarden 1.36.0 (PG backend) LIVE. Vault MIGRATED from Lumen (pgloader, parity verified 1u/2c/1f/3dev) + public cutover DONE: vault.lumennode.uk origin → maat 100.105.219.34:8222 via Lumen CF tunnel (Access still in front). Lumen VW parked (Exited, restart=no) as rollback. Nightly backup→Thoth. Wadjet HA replication still pending Wadjet hw. |
+-| Anubis | Dell OptiPlex 3090 Ultra | Borg backup repo + Gitea | [DEPLOYED] LAN 192.168.8.232 static; Gitea 1.26.2 + Borg server live; TS pending Frank auth |
+ | Bastet | XK-FLX J5005 · 16GB (on hand) | Syncthing + light services (PiHole/DNS/firewall is on the Topton, NOT here) | [PLANNED] — board + 16GB on hand; storage plan in Detailed specs |
+ | Network Guardian | Topton MW-JSL2.5G-4LV10 · Jasper Lake · 32GB | OPNsense + AdGuard/PiHole + Unbound + Suricata + WireGuard | [PLANNED] — board + 32GB on hand; awaiting boot SSD (see Detailed specs) |
+ | Sokar | i-view 1780 AIO | Hardware forensics / firmware-flashing PC | [PLANNED] |

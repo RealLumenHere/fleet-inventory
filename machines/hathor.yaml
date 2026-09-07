@@ -21,4 +21,4 @@ roles: [inference]
 services: [ollama, gpu-lowpower.service]
 serves: [hathor-lfm-1b]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-09, last_verified: 2026-09-07, upgrades: [], known_issues: ["Bench boot 2026-08-15 was HEALTHY; old wedged-no-network quarantine state is stale."]}
+ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-07, upgrades: [], known_issues: ["Bench boot 2026-08-15 was HEALTHY; old wedged-no-network quarantine state is stale."]}

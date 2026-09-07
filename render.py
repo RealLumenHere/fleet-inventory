@@ -10,6 +10,9 @@ The served page polls render_status.json every 30 s and shows a red banner when
 ok=false; the page below the banner is the last-good render.
 
 Exit status: 0 on success, 1 on inventory error (status file still written).
+
+`render.py --md [--update FILE] [--dry-run]` renders the FLEET_MAP.md roster TABLE instead
+(fleet_md.py, wq#1456) and never touches www/.
 """
 import datetime
 import hashlib
@@ -159,6 +162,9 @@ def render(root=None):
 
 
 def main(argv):
+    if "--md" in argv[1:]:  # wq#1456: markdown roster table, see fleet_md.py
+        import fleet_md
+        return fleet_md.main(argv[1:])
     root = None
     if len(argv) == 3 and argv[1] == "--root":
         root = argv[2]

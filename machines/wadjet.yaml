@@ -22,6 +22,7 @@ services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
 ops:
+  maint_tier: 3            # wq#1456: A11 §5 tier 3 (vault standby) per fleet-maint-assemble TIER3_STANDBY
   provisioned: 2026-06-24
   last_verified: 2026-09-07
   upgrades: [{date: 2026-07-10, change: "RAPL PL1 75W->45W (cpu-powercap.service), PL2 90W unchanged"}]

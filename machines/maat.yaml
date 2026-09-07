@@ -20,4 +20,4 @@ roles: [vault, ha-primary, pg-primary]
 services: [vaultwarden (compose /opt/maat-vaultwarden), postgres]
 serves: [Vaultwarden password vault; PG primary streaming to bes+sobek]
 governance: {crown_jewel: true, never_restart: false, never_reboot_unless_recoverable: true, off_limits: false}
-ops: {provisioned: VERIFY, last_verified: 2026-09-04, upgrades: [], known_issues: ["AC-restore quirk = one power blip -> multi-day dark vault; needs a board that holds the setting or an external auto-power-on module"]}
+ops: {maint_tier: 4, provisioned: VERIFY, last_verified: 2026-09-04, upgrades: [], known_issues: ["AC-restore quirk = one power blip -> multi-day dark vault; needs a board that holds the setting or an external auto-power-on module"]}

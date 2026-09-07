@@ -10,7 +10,7 @@ status:
 network:
   tailscale_ip: VERIFY
   lan_ip: VERIFY
-  ssh: {user: VERIFY, method: VERIFY}   # method: key / ts-ssh check-mode / LAN-only / n/a
+  ssh: {user: VERIFY, method: VERIFY}   # method: key / ts-ssh check-mode / LAN-only / n/a; optional key: /path/to/private_key
   nics: []                              # [{iface, mac, note}]  note "NEVER SPOOF" where it matters
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
@@ -23,4 +23,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: VERIFY, last_verified: VERIFY, upgrades: [], known_issues: []}
+ops: {provisioned: VERIFY, last_verified: VERIFY, upgrades: [], known_issues: []}   # + maint_tier: N when the box joins the maintenance window (SCHEMA.md ## ops)

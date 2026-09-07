@@ -1,5 +1,6 @@
 # seeded-from: lumen_state current thoth + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+# wq#1456: ssh.key from rotate-fleet-pw.sh TKEY (thoth uses its own key file); maint_tier 1 (A11 §5 leaf)
 identity: {name: thoth, aliases: [], make_model: "Seneca MP mini PC", serial: VERIFY, location: rack}
 status:
   status: active
@@ -9,7 +10,7 @@ status:
 network:
   tailscale_ip: 100.75.1.108
   lan_ip: 192.168.8.218
-  ssh: {user: thoth, method: key}
+  ssh: {user: thoth, method: key, key: /home/lumen/.ssh/thoth_ed25519}
   nics: []
 hardware:
   cpu: {model: Intel i3-1115G4, cores: 2, gen: Tiger Lake (11th gen)}
@@ -22,4 +23,4 @@ roles: [media, torrent]
 services: [plex, torrent client]
 serves: [Plex / media library; candidate host for the Pico serprog rig (always-on, keeps Lumen untouched)]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-04-25, last_verified: 2026-09-07, upgrades: [], known_issues: ["tailnet-OFFLINE since ~2026-09-02: LAN 192.168.8.218 pings (L3 up) but :22 does not answer — live example for DESIGN_SOT test (iv); Gatus alert must keep firing after regeneration."]}
+ops: {maint_tier: 1, provisioned: 2026-04-25, last_verified: 2026-09-07, upgrades: [], known_issues: ["tailnet-OFFLINE since ~2026-09-02: LAN 192.168.8.218 pings (L3 up) but :22 does not answer — live example for DESIGN_SOT test (iv); Gatus alert must keep firing after regeneration."]}
