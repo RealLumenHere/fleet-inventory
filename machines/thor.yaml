@@ -1,0 +1,25 @@
+identity: {name: thor, aliases: ["Samsung", "the reinstalled Samsung"], make_model: "Samsung Galaxy Book Pro 360 (laptop)", serial: VERIFY, location: bench}
+status:   {status: active, power: on, monitor: true}
+network:
+  tailscale_ip: 100.112.151.100
+  lan_ip: 192.168.8.132
+  ssh: {user: thor, method: key}
+  nics: []
+hardware:
+  cpu: {model: VERIFY (11th-gen i5/i7), cores: VERIFY, gen: Tiger Lake}
+  ram: {size_gb: VERIFY, type: LPDDR4x, ceiling_gb: VERIFY (soldered)}
+  storage: [{type: NVMe, size: VERIFY}]
+  gpu: [{model: Iris Xe (integrated), vram_gb: 0}]
+  board: {model: Galaxy Book Pro 360, quirks: "LAPTOP: suspends on lid-close/idle + battery-dependent -> drops off the fleet (down 3h 2026-09-04). No smart plug -> no remote recovery when asleep. EC fan quirk (reset 07-16)."}
+  power_hw: {ups: false, plug_id: none, recovery: "PHYSICAL: open lid / power on. No remote path when suspended."}
+roles: [workstation, system-tts, ccc-host]
+services: [CCC (electron /home/thor/claude-command-center), TTS, bar-fix.service]
+serves: [system-wide TTS; Claude Command Center dashboard]
+governance: {crown_jewel: false, never_restart: true, off_limits: false}
+ops:
+  provisioned: VERIFY
+  last_verified: 2026-09-04
+  upgrades: []
+  known_issues:
+    - "DURABLE FIX PENDING (apply when back up): set logind HandleLidSwitch=ignore + HandleLidSwitchExternalPower=ignore + disable idle-suspend, so a fleet-node laptop stops dropping off on lid-close/idle. Root cause of recurring Thor outages."
+    - "CCC runs here -> Thor down = dashboard down. Fleet dispatch/inference unaffected (those are on Lumen)."

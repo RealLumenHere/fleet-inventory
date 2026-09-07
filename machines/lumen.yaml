@@ -1,0 +1,19 @@
+identity: {name: lumen, aliases: [], make_model: Dell Precision T5810, serial: VERIFY, location: rack}
+status:   {status: active, power: on, monitor: true}
+network:
+  tailscale_ip: 100.117.66.102
+  lan_ip: 192.168.8.160
+  ssh: {user: lumen, method: key}
+  nics: [{iface: enp0s25, mac: "64:00:6a:58:fc:d8", note: "NEVER SPOOF"}]
+hardware:
+  cpu: {model: VERIFY (Xeon E5-16xx/26xx v3/v4), cores: VERIFY, gen: Haswell/Broadwell-EP}
+  ram: {size_gb: VERIFY, type: DDR4-ECC, speed: VERIFY, ceiling_gb: 256}
+  storage: [{type: VERIFY, size: VERIFY, interface: VERIFY}]
+  gpu: []
+  board: {model: T5810 (C612), bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: 685, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: "on-site power button"}
+roles: [orchestrator-host, ai-services, litellm-gateway, dispatcher, minerva, commander-mcp]
+services: [litellm, lumen-foreman-dispatch, dispatch-watchdog, minerva-*, sentinel]
+serves: [litellm :4000 gateway for the whole fleet]
+governance: {crown_jewel: true, never_restart: false, off_limits: false}
+ops: {provisioned: VERIFY, last_verified: 2026-09-04, upgrades: [], known_issues: ["OS 26.04"]}
