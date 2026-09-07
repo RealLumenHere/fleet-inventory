@@ -1,0 +1,17 @@
+[Unit]
+Description=Fleet inventory page, tailnet-only (http://100.117.66.102:8419/fleet.html, wq#1455)
+Documentation=file:///home/lumen/fleet/inventory/DESIGN_SOT.md
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+User=lumen
+Group=lumen
+WorkingDirectory=/home/lumen/fleet/inventory/www
+# Tailnet-only = bind address. No cloudflared route, no LAN bind, no auth.
+ExecStart=/usr/bin/python3 -m http.server 8419 --bind 100.117.66.102 --directory /home/lumen/fleet/inventory/www
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

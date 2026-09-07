@@ -1,0 +1,11 @@
+[Unit]
+Description=Fleet inventory: re-render on inventory change (wq#1455)
+
+[Path]
+PathChanged=/home/lumen/fleet/inventory/machines
+PathChanged=/home/lumen/fleet/inventory/SCHEMA.md
+PathChanged=/home/lumen/fleet/inventory/render.py
+Unit=fleet-inventory-render.service
+
+[Install]
+WantedBy=multi-user.target
