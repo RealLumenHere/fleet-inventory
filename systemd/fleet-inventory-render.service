@@ -1,0 +1,13 @@
+[Unit]
+Description=Fleet inventory: render machines/*.yaml -> www/fleet.html (wq#1455)
+Documentation=file:///home/lumen/fleet/inventory/DESIGN_SOT.md
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=lumen
+Group=lumen
+WorkingDirectory=/home/lumen/fleet/inventory
+ExecStart=/usr/bin/python3 /home/lumen/fleet/inventory/render.py
+# A bad YAML edit exits 1 on purpose (status file records file:line; page stays last-good).
+SuccessExitStatus=0 1

@@ -1,0 +1,10 @@
+[Unit]
+Description=Fleet inventory: belt-and-braces re-render every 5 min (wq#1455)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=fleet-inventory-render.service
+
+[Install]
+WantedBy=timers.target
