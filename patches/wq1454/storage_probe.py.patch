@@ -1,0 +1,165 @@
+--- /home/lumen/agents/storage-audit/storage_probe.py
++++ /home/lumen/agents/storage-audit/storage_probe.py
+@@ -36,7 +36,18 @@
+ NTFY_ALERT = "http://localhost:8080/lumen-alerts"
+ NTFY_INFO = "http://localhost:8080/lumen-updates"
+ 
+-SSH = {  # user@ts-ip; update at provisioning (manifest_add_node.py)
++# wq#1454: SSH targets come from the fleet inventory (network.ssh.user@tailscale_ip via
++# fleet_inventory.ssh_target). This legacy map is consulted ONLY for a name the
++# inventory lacks or cannot resolve, and every such use is logged as a DEFECT so the
++# YAML gets fixed — it is not a roster.
++FLEET_INVENTORY_ROOT = os.environ.get("FLEET_INVENTORY_ROOT", "/home/lumen/fleet/inventory")
++sys.path.insert(0, FLEET_INVENTORY_ROOT)
++try:
++    import fleet_inventory as _inv
++except Exception as _e:
++    print(f"WARN fleet_inventory unavailable ({_e}); legacy SSH map + FLEET_MAP fallback", file=sys.stderr)
++    _inv = None
++SSH_FALLBACK = {  # user@ts-ip — legacy, fallback only (see above)
+  "thor":"thor@100.112.151.100","thoth":"thoth@100.75.1.108",
+  "seshat":"seshat@100.121.243.124","anubis":"anubis@100.121.17.5",
+  "nephthys":"nephthys@100.98.74.87","apep":"apep@100.82.2.72",
+@@ -105,8 +116,7 @@
+     # Parked nodes are deliberately offline — their unreachability is expected,
+     # so stale rows from a pre-park window should be clearable (wq#883).
+     try:
+-        _m = yaml.safe_load(open(MANIFEST))
+-        _parked = {n for n, e in _m.get("nodes", {}).items() if e.get("parked")}
++        _parked = parked_set(yaml.safe_load(open(MANIFEST)))
+     except Exception:
+         _parked = set()
+     covered_nodes = set(covered_nodes) | SYNTHETIC | _parked
+@@ -140,7 +150,8 @@
+     except Exception as e:
+         log(f"episode failed (non-fatal): {e}")
+ 
+-def fleet_map_expects_online(node):
++def _fleet_map_expects_online(node):
++    """Legacy FLEET_MAP.md marker scan — fallback only (wq#1454)."""
+     try:
+         fmap = open("/home/lumen/FLEET_MAP.md").read()
+     except Exception:
+@@ -150,14 +161,86 @@
+             return "[DEPLOYED-BUT-OFFLINE]" not in ln and "[RETIRED]" not in ln and "[DECOMMISSIONED]" not in ln
+     return True
+ 
++# ── inventory roster (wq#1454) ───────────────────────────────────────────
++_ROSTER = {"loaded": False, "records": None}
++
++def _roster():
++    """Inventory records (last-good cache on a YAML typo), or None when the
++    inventory AND its cache are unreadable. Loaded once per process."""
++    if not _ROSTER["loaded"]:
++        _ROSTER["loaded"] = True
++        if _inv is not None:
++            try:
++                _ROSTER["records"] = _inv.load(strict=True, fallback=True)
++            except Exception as e:
++                log(f"DEFECT inventory unreadable and no last-good cache ({e}) — legacy roster fallback")
++    return _ROSTER["records"]
++
++def fleet_map_expects_online(node):
++    """MONITORED(node) per the inventory; FLEET_MAP markers only as fallback."""
++    r = _roster()
++    if r is None:
++        return _fleet_map_expects_online(node)
++    return _inv.is_monitored(node, r)
++
++def ssh_target(node):
++    """user@tailscale_ip from the inventory; legacy map only for a name the
++    inventory lacks/cannot resolve (logged as a DEFECT each run)."""
++    r = _roster()
++    if r is not None:
++        if node in r:
++            try:
++                return _inv.ssh_target(node, r)
++            except _inv.InventoryError as e:
++                log(f"DEFECT inventory: {e} — using legacy SSH map for {node}")
++        else:
++            log(f"DEFECT inventory lacks {node} (manifest has it) — using legacy SSH map")
++    return SSH_FALLBACK.get(node)
++
++def parked_set(man, candidates=None):
++    """Nodes scored as PARKED: manifest `parked: true` UNION manifest nodes the
++    inventory does not monitor (monitor:false / decommissioned / dead / in-storage
++    / absent). One YAML edit parks a node here, in Gatus, and everywhere else.
++    `candidates` limits the inventory half to the nodes actually being polled."""
++    nodes = man.get("nodes", {}) or {}
++    parked = {n for n, e in nodes.items() if e.get("parked")}
++    r = _roster()
++    if r is not None:
++        for n in (candidates if candidates is not None else nodes):
++            if n in nodes and not _inv.is_monitored(n, r):
++                parked.add(n)
++    return parked
++
++def roster_report(man):
++    """--roster: what this probe would poll/park and where each SSH target came from."""
++    nodes = [n for n, e in man["nodes"].items() if not e.get("provision_pending")]
++    parked = parked_set(man, nodes)
++    r = _roster()
++    lines = [f"inventory: {'loaded (%d records)' % len(r) if r is not None else 'UNAVAILABLE (legacy fallback)'}",
++             f"polled: {','.join(sorted(n for n in nodes if n not in parked))}",
++             f"parked: {','.join(sorted(parked))}"]
++    for n in sorted(nodes):
++        if n == "lumen":
++            continue
++        src = "inventory" if (r is not None and n in r and _inventory_resolves(n, r)) else "legacy-fallback"
++        lines.append(f"ssh {n}: {ssh_target(n) or 'NONE'} [{src}]")
++    return lines
++
++def _inventory_resolves(n, r):
++    try:
++        _inv.ssh_target(n, r)
++        return True
++    except _inv.InventoryError:
++        return False
++
+ def collect(node):
+     """Return (snapshot dict | None, err)."""
+     try:
+         if node == "lumen":
+             r = subprocess.run(["bash", COLLECT], capture_output=True, text=True, timeout=45)
+         else:
+-            tgt = SSH.get(node)
+-            if not tgt: return None, "no ssh mapping"
++            tgt = ssh_target(node)
++            if not tgt: return None, "no ssh mapping (inventory + legacy)"
+             r = subprocess.run(["ssh","-o","BatchMode=yes","-o","ConnectTimeout=8",tgt,"bash -s"],
+                                stdin=open(COLLECT), capture_output=True, text=True, timeout=45)
+         return json.loads(r.stdout), None
+@@ -570,7 +653,8 @@
+     # re-admit-or-re-park decision — so it becomes a finding instead of silence.
+     # NOTE: the S8b unreachable-but-drawing check still covers parked nodes (it
+     # reads man["nodes"], not this list), so a silently re-powered box is caught.
+-    parked = {n for n, e in man["nodes"].items() if e.get("parked")}
++    # wq#1454: parked = manifest parked UNION inventory not-monitored (parked_set).
++    parked = parked_set(man, nodes)
+     parked_online = sorted(n for n in parked if n in snaps)
+     for n in parked_online:
+         snaps.pop(n)      # never assert config against a node we stopped tracking
+@@ -654,7 +738,12 @@
+     ap.add_argument("--run", action="store_true")
+     ap.add_argument("--boot", action="store_true", help="lumen-local arrays+mounts fix (boot assert)")
+     ap.add_argument("--node")
++    ap.add_argument("--roster", action="store_true", help="print polled/parked sets + SSH target sources (no SSH, no alerts)")
+     a = ap.parse_args()
++    if a.roster:
++        for ln in roster_report(yaml.safe_load(open(MANIFEST))):
++            print(ln)
++        sys.exit(0)
+     if a.boot:
+         ok, d, c = run_probe(fix=True, only_node="lumen", storage_only=True)
+         print(f"boot-assert: {d}")
+@@ -662,8 +751,8 @@
+     elif a.check:
+         man = yaml.safe_load(open(MANIFEST))
+         snaps = {}
+-        nodes = [a.node] if a.node else [n for n, e in man["nodes"].items()
+-                                         if not e.get("provision_pending") and not e.get("parked")]
++        _cand = [n for n, e in man["nodes"].items() if not e.get("provision_pending")]
++        nodes = [a.node] if a.node else [n for n in _cand if n not in parked_set(man, _cand)]
+         for n in nodes:
+             s, err = collect(n)
+             if s: snaps[n] = s
