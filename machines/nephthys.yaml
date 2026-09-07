@@ -20,4 +20,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, off_limits: false}
-ops: {provisioned: 2026-06, last_verified: 2026-09-04, upgrades: [], known_issues: ["RETIRED — do not monitor/reach/report. Roles moved to Bes."]}
+ops: {maint_tier: 1.5, provisioned: 2026-06, last_verified: 2026-09-04, upgrades: [], known_issues: ["RETIRED — do not monitor/reach/report. Roles moved to Bes."]}

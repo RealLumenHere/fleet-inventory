@@ -1,5 +1,6 @@
 # seeded-from: lumen_state current khepri + sentinel Gatus 1-nodes block (config.yaml)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+# wq#1456: ssh.user=khepri from rotate-fleet-pw.sh node table (khepri|khepri|100.120.16.78); maint_tier per fleet-maint-assemble A11 §5 tiers
 identity: {name: khepri, aliases: [], make_model: VERIFY, serial: VERIFY, location: bench}
 status:
   status: bench
@@ -9,7 +10,7 @@ status:
 network:
   tailscale_ip: 100.120.16.78
   lan_ip: 192.168.8.211     # enp12s0 on Lumen LAN — supersedes the 192.168.0.28 workbench-DHCP record
-  ssh: {user: VERIFY, method: key}
+  ssh: {user: khepri, method: key}
   nics: [{iface: enp12s0, mac: VERIFY, note: ""}]
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}

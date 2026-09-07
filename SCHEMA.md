@@ -30,8 +30,14 @@ Grounded in NetBox's device + inventory-item model.
 ## network
   tailscale_ip:    100.x
   lan_ip:          192.168.x
-  ssh:             {user, method}      # method: key / ts-ssh check-mode / LAN-only
+  ssh:             {user, method, key} # method: key / ts-ssh check-mode / LAN-only / n/a (= do not reach)
+                                       # key: OPTIONAL per-node private key path (thoth); default id_ed25519
   nics:            [{iface, mac, note}] # note: "NEVER SPOOF" where it matters
+
+  ssh_target(name) = user@tailscale_ip; unresolvable (VERIFY user/ip, method n/a) => the machine is
+  simply absent from every ssh fan-out (fleet-inv ssh-list reports it on stderr). Consumers:
+  fleet-keymesh / fleet-roll-reboot / rotate-fleet-pw (bash, via `fleet-inv ssh-list`), fleet-update-check /
+  fleet-maint-* / drift-assert / ui-inventory (python, via fleet_inventory.select / ssh_targets). wq#1456.
 
 ## hardware   (the spec sheet — edit here on upgrades; keep history)
   cpu:             {model, cores, gen}
@@ -57,3 +63,13 @@ Grounded in NetBox's device + inventory-item model.
   last_verified:   date                # when specs were last confirmed against the box
   upgrades:        [{date, change}]    # spec-change history
   known_issues:    [ops-debt / quirks]
+  maint_tier:      number              # A11 §5 maintenance ordering law (wq#852/854), low runs first:
+                                       #   1 leaf · 1.5 inference leaf · 2 service · 3 vault standby (the
+                                       #   rehearsal) · 4 vault primary · 5 the runner host (Lumen, always last)
+                                       # unset = "unlisted-but-reachable": sorts after 5, flagged for review.
+                                       # fleet-maint-assemble / fleet-maint-run build NODE_ORDER from this.
+                                       # governance.never_restart (Thor) excludes a node from maintenance entirely.
+
+## hardware.power_hw.plug_id
+  The smart-plug id (P1..P14, E1) a box sits on. `fleet-inv plugs` feeds plug-ctl's labels from it —
+  move a box to another plug = edit the YAML. VERIFY/none = no plug known.

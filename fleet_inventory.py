@@ -8,6 +8,11 @@ API
   load(strict=True, fallback=False, root=None) -> dict name -> record
   all() / monitored() / is_monitored(name) / get(name) / ssh_target(name)
   by_role(role) / validate(records=None, root=None) -> [errors]
+  select(**filters) / ssh_targets(**filters) / is_local(rec) / maint_tier(rec) / plug_map()
+      (wq#1456: the ops scripts' NODES/HOSTS lists come from these — no script keeps names)
+
+Root resolution: explicit root= arg, else $FLEET_INVENTORY_ROOT, else this file's directory.
+$FLEET_INV_HOSTNAME overrides the local hostname used by is_local() (tests, cross-host runs).
 
 MONITORED(name) := status.monitor is true AND status.status not in
                    {decommissioned, dead, in-storage}.
@@ -23,6 +28,7 @@ sentinel_probes.py edge-clear from wq#548).
 import glob
 import json
 import os
+import socket
 import sys
 import tempfile
 
@@ -52,7 +58,7 @@ class InventoryError(Exception):
 
 # --------------------------------------------------------------------------- paths
 def _root(root):
-    return os.path.abspath(root or INVENTORY_ROOT)
+    return os.path.abspath(root or os.environ.get("FLEET_INVENTORY_ROOT") or INVENTORY_ROOT)
 
 
 def _machines_dir(root):
@@ -131,10 +137,17 @@ def _validate_record(file, rec):
                     errs.append(_err(file, 1, f"network.{k} must be a string or null, got {v!r}"))
             ssh = net.get("ssh")
             if ssh is not None and not isinstance(ssh, dict):
-                errs.append(_err(file, 1, "network.ssh must be a mapping {user, method}"))
+                errs.append(_err(file, 1, "network.ssh must be a mapping {user, method[, key]}"))
+            elif ssh and "key" in ssh and ssh["key"] is not None and not isinstance(ssh["key"], str):
+                errs.append(_err(file, 1, f"network.ssh.key must be a path string, got {ssh['key']!r}"))
     for k in ("roles", "services", "serves"):
         if k in rec and rec[k] is not None and not isinstance(rec[k], list):
             errs.append(_err(file, 1, f"{k} must be a list"))
+    ops = rec.get("ops")
+    if isinstance(ops, dict) and "maint_tier" in ops:
+        t = ops["maint_tier"]
+        if isinstance(t, bool) or not isinstance(t, (int, float)) or t <= 0:
+            errs.append(_err(file, 1, f"ops.maint_tier must be a positive number (A11 §5 tier), got {t!r}"))
     return errs
 
 
@@ -375,16 +388,25 @@ def _clean(v):
 
 
 def ssh_target(name, records=None, root=None):
-    """'user@tailscale_ip' for name. Raises InventoryError if unknown or unresolvable."""
+    """'user@tailscale_ip' for name. Raises InventoryError if unknown or unresolvable
+    (user/ip VERIFY, or network.ssh.method n/a = 'do not reach', e.g. a decommissioned box)."""
     rec = get(name, records, root)
     if rec is None:
         raise InventoryError(f"{name}: not in inventory")
     net = rec.get("network") or {}
-    user = _clean((net.get("ssh") or {}).get("user"))
+    ssh = net.get("ssh") or {}
+    user = _clean(ssh.get("user"))
     ip = _clean(net.get("tailscale_ip"))
+    if str(ssh.get("method") or "").lower() in ("n/a", "none", "no"):
+        raise InventoryError(f"{name}: ssh method {ssh.get('method')!r} — not reachable by design")
     if not user or not ip:
         raise InventoryError(f"{name}: no ssh target (user={user or 'VERIFY'}, tailscale_ip={ip or 'VERIFY'})")
     return f"{user}@{ip}"
+
+
+def ssh_key(rec, default=None):
+    """network.ssh.key (per-node key file override, e.g. thoth) or `default`."""
+    return _clean(((rec.get("network") or {}).get("ssh") or {}).get("key")) or default
 
 
 def by_role(role, records=None, root=None):
@@ -394,3 +416,101 @@ def by_role(role, records=None, root=None):
 
 def names(records=None, root=None):
     return [rec["identity"]["name"] for rec in all(records, root)]
+
+
+# ------------------------------------------------------- consumer selectors (wq#1456)
+def is_local(rec, hostname=None):
+    """True when `rec` is the machine this code runs on (identity.name or an alias == hostname)."""
+    h = (hostname or os.environ.get("FLEET_INV_HOSTNAME") or socket.gethostname()).split(".")[0].lower()
+    ident = rec.get("identity") or {}
+    cands = [ident.get("name")] + list(ident.get("aliases") or [])
+    return h in {str(c).lower() for c in cands if c}
+
+
+def _flag(rec, key):
+    return bool((rec.get("governance") or {}).get(key))
+
+
+def maint_tier(rec):
+    """ops.maint_tier — the node's place in the A11 §5 maintenance ordering law (low runs first).
+    6.0 when unset: 'unlisted-but-reachable, sort after everything, flag for review'."""
+    t = (rec.get("ops") or {}).get("maint_tier")
+    if isinstance(t, bool) or not isinstance(t, (int, float)):
+        return 6.0
+    return float(t)
+
+
+def select(records=None, root=None, *, monitored=True, statuses=None, maintenance=False,
+           no_crown_jewel=False, exclude_self=False, hostname=None):
+    """Roster subset for a consumer. Filters AND together:
+      monitored      MONITORED(name) only (default). False = every status.
+      statuses       iterable of status.status values to keep (e.g. ('active',)).
+      maintenance    drop governance.never_restart nodes (Thor) — for tooling that updates/reboots.
+      no_crown_jewel drop governance.crown_jewel nodes (Ma'at, Lumen) — for blast-radius tooling.
+      exclude_self   drop the machine this runs on (see is_local)."""
+    out = []
+    for rec in all(records, root):
+        st = rec.get("status") or {}
+        if monitored and not _is_monitored_rec(rec):
+            continue
+        if statuses is not None and st.get("status") not in set(statuses):
+            continue
+        if maintenance and _flag(rec, "never_restart"):
+            continue
+        if no_crown_jewel and _flag(rec, "crown_jewel"):
+            continue
+        if exclude_self and is_local(rec, hostname):
+            continue
+        out.append(rec)
+    return out
+
+
+def ssh_targets(records=None, root=None, *, local=None, skipped=None, order="name", hostname=None, **filters):
+    """[(name, 'user@tailscale_ip')] for select(**filters) records that resolve.
+    Unresolvable ones (VERIFY user/ip, method n/a) are dropped; appended to `skipped` as
+    (name, reason) when a list is given. local=TEXT substitutes TEXT for this host's target
+    (fleet-update-check uses '' = run locally, rotate-fleet-pw uses 'LOCAL').
+    order='maint' sorts by (ops.maint_tier, name) — the A11 §5 ordering law."""
+    r = _roster(records, root)
+    out = []
+    for rec in select(r, hostname=hostname, **filters):
+        name = rec["identity"]["name"]
+        if local is not None and is_local(rec, hostname):
+            out.append((name, local))
+            continue
+        try:
+            out.append((name, ssh_target(name, r)))
+        except InventoryError as e:
+            if skipped is not None:
+                skipped.append((name, str(e)))
+    if order == "maint":
+        out.sort(key=lambda t: (maint_tier(r[t[0]]), t[0]))
+    elif order == "name":
+        out.sort(key=lambda t: t[0])
+    return out
+
+
+MAINTENANCE_FILTERS = dict(monitored=True, statuses=("active",), maintenance=True)
+
+
+def maintenance_targets(records=None, root=None, *, local="", skipped=None, hostname=None):
+    """The maintenance-window roster shared by fleet-update-check / fleet-maint-assemble /
+    fleet-maint-run: MONITORED, status active, not governance.never_restart (Thor), in A11 §5
+    order (ops.maint_tier, name). Standby/bench boxes are never maintenance targets — they are
+    'declared absent' (see fleet-maint-assemble). local='' = run on this host without ssh."""
+    return ssh_targets(records, root, local=local, skipped=skipped, order="maint", hostname=hostname,
+                       **MAINTENANCE_FILTERS)
+
+
+def plug_map(records=None, root=None):
+    """{plug_id: name} from hardware.power_hw.plug_id (e.g. 'P3' -> 'hathor'). Ids VERIFY/none skipped.
+    Two machines claiming one plug is a data error: InventoryError."""
+    out = {}
+    for rec in all(records, root):
+        pid = _clean(((rec.get("hardware") or {}).get("power_hw") or {}).get("plug_id"))
+        if not pid or pid.lower() == "none":
+            continue
+        if pid in out:
+            raise InventoryError(f"plug {pid} claimed by both {out[pid]} and {rec['identity']['name']}")
+        out[pid] = rec["identity"]["name"]
+    return out

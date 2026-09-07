@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # Render machines/*.yaml -> fleet.html (the page). Also validates every file parses.
-import yaml, glob, os, html, datetime
+# `render.py --md [--update FILE]` -> the FLEET_MAP.md roster table instead (fleet_md.py, wq#1456).
+import yaml, glob, os, html, datetime, sys
+if "--md" in sys.argv[1:]:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import fleet_md
+    sys.exit(fleet_md.main(sys.argv[1:]))
 rows=[]
 for f in sorted(glob.glob(os.path.join(os.path.dirname(__file__),"machines","*.yaml"))):
     try:

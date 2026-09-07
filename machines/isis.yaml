@@ -22,4 +22,4 @@ roles: [worker, inference]
 services: [ollama]
 serves: [isis-qwen3-32b, qwen36-local (qwen3.6:35b-a3b, LPP rung re-homed off Lumen 2026-08-12)]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-09, last_verified: 2026-09-07, upgrades: [], known_issues: []}
+ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-07, upgrades: [], known_issues: []}
