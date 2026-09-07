@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current mirror (mirror.status DECOMMISSIONED 2026-08-28, Frank)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: mirror, aliases: [], make_model: "Microsoft Surface Go 2", serial: VERIFY, location: storage}
+status:
+  status: decommissioned
+  power: off
+  monitor: false         # DECOMMISSIONED — removed from fleet, do not reach
+  decommissioned: {date: 2026-08-28, reason: "Frank 2026-08-28: removed from fleet. Was the only Windows box (RTDTool bare-metal for RTD/Screenpad firmware work)."}
+network:
+  tailscale_ip: null
+  lan_ip: null
+  ssh: {user: VERIFY, method: n/a}
+  nics: []
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: Surface Go 2, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: false, plug_id: none, ac_restore: n/a, recovery: "n/a (retired)"}
+roles: []
+services: []
+serves: []
+governance: {crown_jewel: false, never_restart: false, off_limits: true}
+ops: {provisioned: VERIFY, last_verified: 2026-09-07, upgrades: [], known_issues: ["RETIRED 2026-08-28 — do not monitor/reach/report."]}

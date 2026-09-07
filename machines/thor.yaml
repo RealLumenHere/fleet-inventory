@@ -1,5 +1,9 @@
 identity: {name: thor, aliases: ["Samsung", "the reinstalled Samsung"], make_model: "Samsung Galaxy Book Pro 360 (laptop)", serial: VERIFY, location: bench}
-status:   {status: active, power: on, monitor: true}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 120, alert: false, alert_desc: "", gatus: true}   # Frank's laptop sleeps — history only, no alert
 network:
   tailscale_ip: 100.112.151.100
   lan_ip: 192.168.8.132

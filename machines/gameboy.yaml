@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current gameboy + sentinel Gatus 1-nodes block (config.yaml)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: gameboy, aliases: [kiosk], make_model: "Microsoft Surface Pro 6", serial: VERIFY, location: VERIFY}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 60, alert: true, alert_desc: "gameboy (Surface Pro 6 pokemon kiosk) unreachable", gatus: true}
+network:
+  tailscale_ip: 100.118.56.59
+  lan_ip: 192.168.8.190
+  ssh: {user: gameboy, method: key}
+  nics: []
+hardware:
+  cpu: {model: Intel i5-8350U, cores: 4, gen: Kaby Lake R (8th gen)}
+  ram: {size_gb: 8, type: LPDDR3 (soldered), ceiling_gb: 8}
+  storage: [{type: NVMe, size: 256GB}]
+  gpu: [{model: UHD 620 (integrated), vram_gb: 0}]
+  board: {model: Surface Pro 6, bios: VERIFY, quirks: "kernel 6.19.8-surface, iptsd for touch"}
+  power_hw: {psu_w: VERIFY, ups: false, plug_id: E1, ac_restore: VERIFY, recovery: "smart plug E1 (Athom V3, ex-P12) — battery-backed device"}
+roles: [pokemon-kiosk]
+services: [kiosk (pokemon emulation playground)]
+serves: []
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-08-01, last_verified: 2026-09-07, upgrades: [{date: 2026-08-07, change: "energy-efficiency mods verified complete (RAM trim, kiosk hardening)"}], known_issues: []}

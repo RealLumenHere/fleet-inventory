@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current sobek + sentinel Gatus 1-nodes block (config.yaml)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: sobek, aliases: [], make_model: VERIFY, serial: VERIFY, location: rack}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 60, alert: true, alert_desc: "", gatus: true}
+network:
+  tailscale_ip: 100.86.156.91
+  lan_ip: 192.168.8.178
+  ssh: {user: VERIFY, method: key}
+  nics: []
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: VERIFY, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
+roles: [vault-standby, pg-standby]
+services: [postgresql (sobek_slot streaming replica of Maat), vaultwarden (parked promote payload)]
+serves: []
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-07-31, last_verified: 2026-09-07, upgrades: [], known_issues: ["HA auto-promote is ARMED and pointed at sobek (verified 2026-08-13)."]}

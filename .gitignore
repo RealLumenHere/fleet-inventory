@@ -1,6 +1,10 @@
 fleet.html
 www/
 .roster.last_good.json
+.roster.parse_error
+.roster.*.tmp
+.scratch_*
+.pytest_cache/
 __pycache__/
 *.bak.*
 tickets/

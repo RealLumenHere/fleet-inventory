@@ -6,15 +6,15 @@ status:
   decommissioned: {date: 2026-08-22, reason: "wq#589 — roles rehomed to Bes; powered down, plug P2 cut. ~85W saved."}
 network:
   tailscale_ip: 100.98.74.87   # STALE tailnet device (shows offline) — delete from Tailscale admin to remove entirely
-  lan_ip: VERIFY
-  ssh: {user: VERIFY, method: n/a}
+  lan_ip: 192.168.8.176        # from lumen_state nephthys.lan_ip (fleet-inv drift, wq#1453) — historical, box is off
+  ssh: {user: nephthys, method: n/a}   # user from lumen_state nephthys.ssh_user; method n/a = do not reach
   nics: []
 hardware:
   cpu: {model: Xeon E5 v2 (Ivy Bridge-EP), cores: VERIFY, gen: v2}
   ram: {size_gb: VERIFY, type: DDR3-ECC}
   storage: [{type: NVMe (proprietary)}]
   gpu: [{model: dual FirePro D300, vram_gb: 2}]
-  board: {model: Mac Pro 6,1, quirks: "afterg3 auto-boot enabled -> plug MUST stay OFF"}
+  board: {model: "Mac Pro 6,1", quirks: "afterg3 auto-boot enabled -> plug MUST stay OFF"}
   power_hw: {plug_id: P2, ac_restore: "auto-boot on -> keep plug OFF", recovery: "n/a (retired)"}
 roles: []
 services: []

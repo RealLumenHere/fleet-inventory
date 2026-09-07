@@ -15,7 +15,17 @@ Grounded in NetBox's device + inventory-item model.
   status:          active | standby | bench | in-storage | decommissioned | dead
   power:           on | off | plug-cut
   monitor:         true | false        # false => NO liveness sweep, NO alerts
+  monitoring:      {interval_s: 60, alert: true, alert_desc: "", gatus: true}   # OPTIONAL; defaults shown
+                   #   interval_s  liveness poll period (Gatus ICMP interval)
+                   #   alert       ntfy on unreachable (false = history only, e.g. laptops that sleep)
+                   #   alert_desc  human text on the alert ("" = Gatus default title)
+                   #   gatus       false = keep in roster but emit NO Gatus ICMP row (lumen self-ping is meaningless)
   decommissioned:  {date, reason}      # when status=decommissioned
+
+  MONITORED(name) := status.monitor is true AND status.status not in {decommissioned, dead, in-storage}.
+  A node ABSENT from inventory is NOT monitored (fail-closed on membership: consumers carry no name
+  lists of their own — they call fleet_inventory.monitored()/is_monitored()). Loader: fleet_inventory.py;
+  CLI: fleet-inv. Files under machines/ whose name starts with "_" are ignored.
 
 ## network
   tailscale_ip:    100.x

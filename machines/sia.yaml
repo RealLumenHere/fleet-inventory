@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current sia (NO Gatus 1-nodes entry today — DESIGN_SOT.md defect #2, silently unmonitored)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: sia, aliases: [], make_model: VERIFY, serial: VERIFY, location: rack}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 60, alert: true, alert_desc: "sia unreachable", gatus: true}
+network:
+  tailscale_ip: 100.111.15.120
+  lan_ip: 192.168.8.174
+  ssh: {user: VERIFY, method: key}
+  nics: [{iface: VERIFY, mac: VERIFY, note: "2.5G RTL8125 active on fleet LAN"}]
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: VERIFY, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P8, ac_restore: VERIFY, recovery: "smart plug P8 power-cycle"}
+roles: [worker]
+services: []
+serves: []
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-07-11, last_verified: 2026-09-07, upgrades: [], known_issues: ["Was absent from Gatus 1-nodes until wq#1453 (slice B regenerates the block from this file).", "SSH flakiness noted 2026-07-11 (lumen_state sia.status) — verify ssh user + key path."]}

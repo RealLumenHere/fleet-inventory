@@ -1,0 +1,24 @@
+# seeded-from: lumen_state current apis (apis.status DEAD 2026-08-13)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: apis, aliases: [], make_model: VERIFY, serial: VERIFY, location: bench}
+status:
+  status: dead
+  power: off
+  monitor: false         # DEAD 2026-08-13 — no power, will not POST
+network:
+  tailscale_ip: 100.89.147.95   # stale tailnet device
+  lan_ip: 192.168.0.72
+  ssh: {user: VERIFY, method: n/a}
+  nics: []
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY, interface: "2.5in SATA (migration path for replacement)"}]
+  gpu: []
+  board: {model: VERIFY, bios: VERIFY, quirks: "will not POST"}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: "n/a (dead; replacement hardware planned)"}
+roles: []
+services: []
+serves: []
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-06-18, last_verified: 2026-09-07, upgrades: [], known_issues: ["DEAD confirmed 2026-08-13. Former RE/forensics + parts-photography bench (BenQ ideaCam S1 camera) — role and camera to be rehomed with the replacement."]}

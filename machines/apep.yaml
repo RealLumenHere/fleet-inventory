@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current apep + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: apep, aliases: [], make_model: "Whitebox Apollo Lake mini-PC (AMI board 'Apollolake', no OEM branding)", serial: VERIFY, location: bench}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 120, alert: true, alert_desc: "apep unreachable (deployable test station; mirrors its sshauth alert stance)", gatus: true}
+network:
+  tailscale_ip: 100.82.2.72
+  lan_ip: 192.168.0.161     # workbench LAN (BE9300 side), not 192.168.8.x
+  ssh: {user: apep, method: key}
+  nics: []
+hardware:
+  cpu: {model: Intel Celeron N3350, cores: 2, gen: Apollo Lake}
+  ram: {size_gb: 4, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: AMI Apollolake, bios: "5.12 (2020-09-07)", quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
+roles: [test-station]
+services: []
+serves: [deployable test station (Frank 2026-08-12): BenQ USB camera for on-bench work]
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-06-02, last_verified: 2026-09-07, upgrades: [], known_issues: ["Transient WiFi unreach ~2026-08-09 (BE9300 relocation suspected), self-recovered."]}

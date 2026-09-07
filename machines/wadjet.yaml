@@ -1,0 +1,28 @@
+# seeded-from: lumen_state current wadjet + sentinel Gatus 1-nodes block (config.yaml, DISABLED 2026-07-18 entry)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: wadjet, aliases: [], make_model: VERIFY, serial: VERIFY, location: shelf}
+status:
+  status: standby
+  power: off             # powered off, tailnet-offline 25d+; no smart plug (P12 removed 2026-07-16)
+  monitor: false         # retired from vault-standby role (Frank 2026-08-02); successors bes_slot + sobek_slot
+network:
+  tailscale_ip: 100.116.217.15
+  lan_ip: 192.168.8.173
+  ssh: {user: wadjet, method: key}
+  nics: []
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: VERIFY, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: none, ac_restore: VERIFY, recovery: "PHYSICAL power-on (no plug)"}
+roles: []
+services: []
+serves: []
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops:
+  provisioned: 2026-06-24
+  last_verified: 2026-09-07
+  upgrades: [{date: 2026-07-10, change: "RAPL PL1 75W->45W (cpu-powercap.service), PL2 90W unchanged"}]
+  known_issues: ["pg_role RELEASED 2026-07-18 (was streaming standby of Maat); to rejoin: recreate wadjet_slot on Maat + pg_basebackup."]

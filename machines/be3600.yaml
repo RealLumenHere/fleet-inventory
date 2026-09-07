@@ -1,0 +1,24 @@
+# seeded-from: lumen_state current be3600 (be3600.role GL-iNet Slate 7 workbench router / be3600.tailscale_ip)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the device
+identity: {name: be3600, aliases: [slate7, workbench-router], make_model: "GL.iNet Slate 7 (GL-BE3600)", serial: VERIFY, location: workbench}
+status:
+  status: active
+  power: on
+  monitor: false         # router, not a compute node; backhaul monitoring lives in Gatus group 0-backhaul (not derived from inventory)
+network:
+  tailscale_ip: 100.81.177.14
+  lan_ip: VERIFY             # gateway of the 192.168.0.x workbench LAN
+  ssh: {user: VERIFY, method: VERIFY}
+  nics: []
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: GL-BE3600, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: "power-cycle"}
+roles: [router]
+services: [tailscale (subnet/exit node — VERIFY)]
+serves: [workbench LAN 192.168.0.x]
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-06-08, last_verified: 2026-09-07, upgrades: [], known_issues: []}

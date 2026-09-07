@@ -1,5 +1,9 @@
 identity: {name: maat, aliases: ["Ma'at"], make_model: "mini-PC (WeiBu ADL-N board)", serial: VERIFY, location: rack}
-status:   {status: active, power: on, monitor: true}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 60, alert: true, alert_desc: "maat unreachable — VAULT PRIMARY down", gatus: true}
 network:
   tailscale_ip: 100.105.219.34
   lan_ip: 192.168.8.202

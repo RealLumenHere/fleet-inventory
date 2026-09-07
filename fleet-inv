@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+"""fleet-inv — CLI over fleet_inventory.py (wq#1453). Thin wrapper; all logic in the lib.
+
+  fleet-inv list [--monitored] [--json]
+  fleet-inv get <name> [dotted.key]
+  fleet-inv ssh-list
+  fleet-inv check
+  fleet-inv drift        # inventory vs lumen_state — REPORT ONLY, never writes state
+
+Exit codes: 0 ok · 1 error/invalid · 2 drift found (drift) or name/key missing (get).
+"""
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import fleet_inventory as inv  # noqa: E402
+
+LUMEN_STATE = "/home/lumen/minerva/lumen_state.py"
+IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
+FACT_RE = re.compile(r"^\s*([a-z0-9_-]+)\.([a-z0-9_]+)\s+=\s+(.*?)\s*(?:\(since [^)]*\))?\s*$", re.I)
+
+
+def _roster(args):
+    try:
+        return inv.load(strict=True, fallback=not args.strict)
+    except inv.InventoryError as e:
+        print(f"ERROR {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_list(args):
+    r = _roster(args)
+    recs = inv.monitored(r) if args.monitored else inv.all(r)
+    if args.json:
+        print(json.dumps([_public(x) for x in recs], indent=2, sort_keys=True, default=str))
+        return 0
+    rows = []
+    for rec in recs:
+        st, net = rec.get("status") or {}, rec.get("network") or {}
+        mon = st.get("monitoring") or {}
+        rows.append((rec["identity"]["name"], st.get("status", "?"),
+                     "mon" if inv._is_monitored_rec(rec) else "-",
+                     f"{mon.get('interval_s')}s" if inv._is_monitored_rec(rec) else "-",
+                     "alert" if inv._is_monitored_rec(rec) and mon.get("alert") else "-",
+                     str(net.get("tailscale_ip") or "-"), str(net.get("lan_ip") or "-"),
+                     ",".join(rec.get("roles") or []) or "-"))
+    hdr = ("NAME", "STATUS", "MON", "IVL", "ALERT", "TAILSCALE_IP", "LAN_IP", "ROLES")
+    widths = [max(len(str(x[i])) for x in rows + [hdr]) for i in range(len(hdr))]
+    for row in [hdr] + rows:
+        print("  ".join(str(c).ljust(widths[i]) for i, c in enumerate(row)).rstrip())
+    return 0
+
+
+def _public(rec):
+    return {k: v for k, v in rec.items() if not k.startswith("_")}
+
+
+def cmd_get(args):
+    rec = inv.get(args.name, _roster(args))
+    if rec is None:
+        print(f"{args.name}: not in inventory", file=sys.stderr)
+        return 2
+    val = _public(rec)
+    if args.key:
+        for part in args.key.split("."):
+            if isinstance(val, dict) and part in val:
+                val = val[part]
+            elif isinstance(val, list) and part.isdigit() and int(part) < len(val):
+                val = val[int(part)]
+            else:
+                print(f"{args.name}: no key {args.key!r}", file=sys.stderr)
+                return 2
+    if isinstance(val, (dict, list)):
+        print(json.dumps(val, indent=2, sort_keys=True, default=str))
+    else:
+        print(val)
+    return 0
+
+
+def cmd_ssh_list(args):
+    r = _roster(args)
+    rc = 0
+    for rec in inv.monitored(r):
+        name = rec["identity"]["name"]
+        try:
+            print(f"{name}\t{inv.ssh_target(name, r)}")
+        except inv.InventoryError as e:
+            print(f"# {e}", file=sys.stderr)
+    return rc
+
+
+def cmd_check(args):
+    errs = inv.validate()
+    if errs:
+        for e in errs:
+            print(f"ERROR {e}")
+        print(f"INVALID: {len(errs)} error(s)")
+        return 1
+    r = inv.load(strict=True, fallback=False)
+    print(f"OK: {len(r)} machines valid, {len(inv.monitored(r))} monitored; "
+          f"last-good written to {inv._last_good_path(None)}")
+    return 0
+
+
+def _state_facts(node):
+    """Parse `lumen_state.py current <node>` into {predicate: value}. Read-only."""
+    try:
+        out = subprocess.run([sys.executable, LUMEN_STATE, "current", node],
+                             capture_output=True, text=True, timeout=30).stdout
+    except (OSError, subprocess.SubprocessError) as e:
+        print(f"# lumen_state unavailable for {node}: {e}", file=sys.stderr)
+        return {}
+    facts = {}
+    for line in out.splitlines():
+        m = FACT_RE.match(line)
+        if m and m.group(1).lower() == node.lower():
+            facts[m.group(2).lower()] = m.group(3).strip()
+    return facts
+
+
+def _state_ip(facts, *preds):
+    for p in preds:
+        v = facts.get(p)
+        if v:
+            m = IP_RE.search(v)
+            if m:
+                return m.group(1)
+    return None
+
+
+def _state_user(facts):
+    v = facts.get("ssh_user")
+    if v:
+        m = re.match(r"[A-Za-z][A-Za-z0-9-]*", v)
+        if m:
+            return m.group(0)
+    v = facts.get("ssh")
+    if v:
+        m = re.match(r"\s*([A-Za-z][A-Za-z0-9-]*)@", v)
+        if m:
+            return m.group(1)
+    return None
+
+
+def cmd_drift(args):
+    r = _roster(args)
+    rows, drift = [], 0
+    for rec in inv.all(r):
+        name = rec["identity"]["name"]
+        net = rec.get("network") or {}
+        facts = _state_facts(name)
+        pairs = (
+            ("tailscale_ip", inv._clean(net.get("tailscale_ip")), _state_ip(facts, "tailscale_ip", "ts_ip")),
+            ("lan_ip", inv._clean(net.get("lan_ip")), _state_ip(facts, "lan_ip")),
+            ("ssh.user", inv._clean((net.get("ssh") or {}).get("user")), _state_user(facts)),
+        )
+        for field, mine, theirs in pairs:
+            if theirs is None:
+                verdict = "NO-FACT"
+            elif mine is None:
+                verdict = "UNVERIFIED"
+            elif mine == theirs:
+                verdict = "MATCH"
+            else:
+                verdict, drift = "DRIFT", drift + 1
+            if verdict != "MATCH" or args.verbose:
+                rows.append((name, field, mine or "VERIFY", theirs or "-", verdict))
+    hdr = ("NODE", "FIELD", "INVENTORY", "LUMEN_STATE", "VERDICT")
+    widths = [max(len(str(x[i])) for x in rows + [hdr]) for i in range(len(hdr))]
+    for row in [hdr] + rows:
+        print("  ".join(str(c).ljust(widths[i]) for i, c in enumerate(row)).rstrip())
+    print(f"drift: {drift} disagreement(s) across {len(r)} machines "
+          f"(report only; inventory YAML is truth — fix the YAML or ingest a newer fact)")
+    return 2 if drift else 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="fleet-inv", description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--strict", action="store_true",
+                    help="fail instead of serving the last-good roster on a parse error")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("list", help="list machines")
+    p.add_argument("--monitored", action="store_true", help="only MONITORED() machines")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(fn=cmd_list)
+    p = sub.add_parser("get", help="print one machine (or one dotted key)")
+    p.add_argument("name")
+    p.add_argument("key", nargs="?")
+    p.set_defaults(fn=cmd_get)
+    p = sub.add_parser("ssh-list", help="name<TAB>user@tailscale_ip for every monitored machine")
+    p.set_defaults(fn=cmd_ssh_list)
+    p = sub.add_parser("check", help="validate every machines/*.yaml; refresh last-good on success")
+    p.set_defaults(fn=cmd_check)
+    p = sub.add_parser("drift", help="compare tailscale_ip/lan_ip/ssh user vs lumen_state (report only)")
+    p.add_argument("-v", "--verbose", action="store_true", help="also print MATCH rows")
+    p.set_defaults(fn=cmd_drift)
+    args = ap.parse_args(argv)
+    return args.fn(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

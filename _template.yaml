@@ -1,23 +1,26 @@
-identity: {name: nephthys, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: VERIFY, location: storage}
+# TEMPLATE — copy to machines/<name>.yaml and replace every VERIFY. Files starting with "_"
+# are ignored by the loader. Keep the 2-line provenance comment (seeded-from + date) on real files.
+identity: {name: VERIFY, aliases: [], make_model: VERIFY, serial: VERIFY, location: VERIFY}
 status:
-  status: decommissioned
-  power: plug-cut
-  monitor: false        # DECOMMISSIONED — no liveness sweep, no alerts, do not reach
-  decommissioned: {date: 2026-08-22, reason: "wq#589 — roles rehomed to Bes; powered down, plug P2 cut. ~85W saved."}
+  status: VERIFY              # active | standby | bench | in-storage | decommissioned | dead
+  power: VERIFY               # on | off | plug-cut
+  monitor: VERIFY             # true | false  (false => NO liveness sweep, NO alerts)
+  monitoring: {interval_s: 60, alert: true, alert_desc: "", gatus: true}   # optional; defaults shown
+  # decommissioned: {date: VERIFY, reason: VERIFY}   # required when status=decommissioned
 network:
-  tailscale_ip: 100.98.74.87   # STALE tailnet device (shows offline) — delete from Tailscale admin to remove entirely
+  tailscale_ip: VERIFY
   lan_ip: VERIFY
-  ssh: {user: VERIFY, method: n/a}
-  nics: []
+  ssh: {user: VERIFY, method: VERIFY}   # method: key / ts-ssh check-mode / LAN-only / n/a
+  nics: []                              # [{iface, mac, note}]  note "NEVER SPOOF" where it matters
 hardware:
-  cpu: {model: Xeon E5 v2 (Ivy Bridge-EP), cores: VERIFY, gen: v2}
-  ram: {size_gb: VERIFY, type: DDR3-ECC}
-  storage: [{type: NVMe (proprietary)}]
-  gpu: [{model: dual FirePro D300, vram_gb: 2}]
-  board: {model: Mac Pro 6,1, quirks: "afterg3 auto-boot enabled -> plug MUST stay OFF"}
-  power_hw: {plug_id: P2, ac_restore: "auto-boot on -> keep plug OFF", recovery: "n/a (retired)"}
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY, speed: VERIFY, dimms_used: VERIFY, dimms_total: VERIFY, ceiling_gb: VERIFY}
+  storage: [{type: VERIFY, size: VERIFY, interface: VERIFY, serial: VERIFY, bay: VERIFY}]
+  gpu: []                               # [{model, vram_gb}]
+  board: {model: VERIFY, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
 roles: []
 services: []
 serves: []
-governance: {crown_jewel: false, off_limits: false}
-ops: {provisioned: 2026-06, last_verified: 2026-09-04, upgrades: [], known_issues: ["RETIRED — do not monitor/reach/report. Roles moved to Bes."]}
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: VERIFY, last_verified: VERIFY, upgrades: [], known_issues: []}

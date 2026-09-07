@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current seshat + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: seshat, aliases: [], make_model: "Seneca PRO925430 mini PC", serial: VERIFY, location: rack}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 60, alert: true, alert_desc: "seshat unreachable (Nextcloud/Collabora)", gatus: true}
+network:
+  tailscale_ip: 100.121.243.124
+  lan_ip: 192.168.8.219
+  ssh: {user: seshat, method: key}
+  nics: []
+hardware:
+  cpu: {model: Intel i3-1115G4, cores: 2, gen: Tiger Lake (11th gen)}
+  ram: {size_gb: 16, type: VERIFY}
+  storage: [{type: NVMe, size: 1TB, model: SK hynix PC611}]
+  gpu: []
+  board: {model: Seneca PRO925430 (same platform as thoth), bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P6, ac_restore: VERIFY, recovery: "smart plug P6 power-cycle"}
+roles: [nextcloud]
+services: [nextcloud, collabora]
+serves: [Nextcloud + Collabora]
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-06-01, last_verified: 2026-09-07, upgrades: [], known_issues: []}

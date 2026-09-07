@@ -1,5 +1,9 @@
 identity: {name: lumen, aliases: [], make_model: Dell Precision T5810, serial: VERIFY, location: rack}
-status:   {status: active, power: on, monitor: true}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 60, alert: false, alert_desc: "", gatus: false}   # self-ping from the Gatus host is meaningless; Lumen-down is covered off-box by bes-awareness
 network:
   tailscale_ip: 100.117.66.102
   lan_ip: 192.168.8.160

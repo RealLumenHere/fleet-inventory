@@ -1,0 +1,24 @@
+# seeded-from: lumen_state current toilet (toilet.lan_ip / toilet.tailscale_ip / toilet.status online, all since 2026-06-17)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the device
+identity: {name: toilet, aliases: [], make_model: VERIFY, serial: VERIFY, location: VERIFY}
+status:
+  status: active
+  power: on
+  monitor: false         # role unknown — do not alert on something nobody can act on (DESIGN_SOT roster: record known_issue)
+network:
+  tailscale_ip: 100.70.94.19
+  lan_ip: 192.168.50.111     # 192.168.50.x — NOT the fleet LAN (192.168.8.x) nor the workbench LAN (192.168.0.x)
+  ssh: {user: VERIFY, method: VERIFY}
+  nics: []
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: VERIFY, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
+roles: []
+services: []
+serves: []
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-06-17, last_verified: 2026-09-07, upgrades: [], known_issues: ["ROLE UNKNOWN: tailnet device 100.70.94.19 on 192.168.50.111 has no recorded purpose, owner, or ssh path. Frank to classify; until then monitor:false."]}

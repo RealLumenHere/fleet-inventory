@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current 3dprinter + sentinel Gatus 1-nodes block (config.yaml)
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: 3dprinter, aliases: [argus], make_model: "LG 24CQ650I-6N all-in-one", serial: VERIFY, location: VERIFY}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 300, alert: false, alert_desc: "", gatus: true}   # AIO gets turned off; history only, no alert
+network:
+  tailscale_ip: 100.114.82.85
+  lan_ip: VERIFY
+  ssh: {user: VERIFY, method: VERIFY}
+  nics: []
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: LG 24CQ650I-6N, bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: "physical power button (AIO)"}
+roles: [3d-print-server]
+services: [klipper (dual instance)]
+serves: [Klipper 3D print server]
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-06-09, last_verified: 2026-09-07, upgrades: [], known_issues: []}

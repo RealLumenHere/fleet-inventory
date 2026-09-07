@@ -1,0 +1,24 @@
+# seeded-from: lumen_state current hapi (hapi.role/chassis_power/bringup_test_plan; no IP facts exist) — listed in storage_manifest today
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: hapi-1, aliases: [hapi, bc250-blade-1], make_model: "ASRock 4U12G chassis — AMD BC-250 blade", serial: VERIFY, location: bench}
+status:
+  status: bench
+  power: VERIFY
+  monitor: false         # bring-up in progress (wq#1337 runbook); no tailnet IP yet — nothing to poll
+network:
+  tailscale_ip: VERIFY
+  lan_ip: VERIFY
+  ssh: {user: VERIFY, method: VERIFY}
+  nics: []
+hardware:
+  cpu: {model: "AMD BC-250 APU (Zen 2, Oberon-class)", cores: VERIFY, gen: Zen 2}
+  ram: {size_gb: 16, type: "GDDR6 (unified, ~13GiB usable for weights+KV)"}
+  storage: [{type: VERIFY}]
+  gpu: [{model: "BC-250 integrated RDNA (cu unlock state per lumen_state hapi.cu_unlock_state)", vram_gb: 16}]
+  board: {model: "ASRock BC-250 blade in 4U12G chassis", bios: VERIFY, quirks: "DF/mem P-state via SMU mailbox (bc250-dfps.py); core unlock per bc250-core-unlock repo"}
+  power_hw: {psu_w: "2x OEM PSU (chassis)", ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
+roles: [inference]
+services: []
+serves: [planned: one model per blade behind LiteLLM :4000 (UD-Q2_K_XL / UD-IQ2_M class quant; Q4_K_M 30B does NOT fit)]
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: VERIFY, last_verified: 2026-09-07, upgrades: [], known_issues: ["Blade naming: hapi-N; chassis expandable 3->6+ blades.", "Present in storage_manifest — slice B must consult monitor:false before probing."]}

@@ -1,0 +1,25 @@
+# seeded-from: lumen_state current thoth + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
+# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
+identity: {name: thoth, aliases: [], make_model: "Seneca MP mini PC", serial: VERIFY, location: rack}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 300, alert: true, alert_desc: "thoth unreachable (torrent/media/Plex node)", gatus: true}
+network:
+  tailscale_ip: 100.75.1.108
+  lan_ip: 192.168.8.218
+  ssh: {user: thoth, method: key}
+  nics: []
+hardware:
+  cpu: {model: Intel i3-1115G4, cores: 2, gen: Tiger Lake (11th gen)}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: VERIFY}]
+  gpu: []
+  board: {model: Seneca MP (same platform as seshat), bios: VERIFY, quirks: ""}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P10, ac_restore: VERIFY, recovery: "smart plug P10 power-cycle"}
+roles: [media, torrent]
+services: [plex, torrent client]
+serves: [Plex / media library; candidate host for the Pico serprog rig (always-on, keeps Lumen untouched)]
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {provisioned: 2026-04-25, last_verified: 2026-09-07, upgrades: [], known_issues: ["tailnet-OFFLINE since ~2026-09-02: LAN 192.168.8.218 pings (L3 up) but :22 does not answer — live example for DESIGN_SOT test (iv); Gatus alert must keep firing after regeneration."]}
