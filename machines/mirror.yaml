@@ -7,7 +7,7 @@ status:
   monitor: false         # DECOMMISSIONED — removed from fleet, do not reach
   decommissioned: {date: 2026-08-28, reason: "Frank 2026-08-28: removed from fleet. Was the only Windows box (RTDTool bare-metal for RTD/Screenpad firmware work)."}
 network:
-  tailscale_ip: null
+  tailscale_ip: 100.93.205.55   # Frank-stated (operator quick-ref), 2026-09-08
   lan_ip: null
   ssh: {user: VERIFY, method: n/a}
   nics: []
