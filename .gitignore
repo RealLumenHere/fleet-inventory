@@ -8,3 +8,4 @@ www/
 __pycache__/
 *.bak.*
 tickets/
+logs/
