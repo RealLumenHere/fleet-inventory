@@ -1,10 +1,10 @@
 # seeded-from: lumen_state current hathor + sentinel Gatus 1-nodes block (config.yaml, DISABLED 2026-07-18 entry)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: hathor, aliases: [], make_model: VERIFY, serial: VERIFY, location: bench}
+identity: {name: hathor, aliases: [], make_model: VERIFY, serial: VERIFY, location: rack}
 status:
-  status: standby
-  power: off             # PARKED, off: graceful poweroff 2026-08-15, plug P3 switched off (lumen_state hathor.power_state)
-  monitor: false         # Frank directive 2026-07-18: powered down; re-enable monitor on power-up
+  status: active
+  power: on              # HEALTHY 2026-09-08: up 1w+, I/O board replaced by Frank + tested clean; do not bench
+  monitor: true          # re-enabled 2026-09-08 (orch-seshat-s31): box is healthy and on; the stale parked state fired hathor:unparked/zombie ~380x
 network:
   tailscale_ip: 100.80.71.13
   lan_ip: 192.168.8.172
@@ -21,4 +21,4 @@ roles: [inference]
 services: [ollama, gpu-lowpower.service]
 serves: [hathor-lfm-1b]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-07, upgrades: [], known_issues: ["Bench boot 2026-08-15 was HEALTHY; old wedged-no-network quarantine state is stale."]}
+ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-08, upgrades: [], known_issues: []}
