@@ -21,4 +21,4 @@ roles: [router]
 services: ["tailscale node GL-BE3600 — OFFLINE on the tailnet since 2026-06-17 (85d at 2026-09-10); routing works (apep reaches the tailnet through it) but any subnet/exit-node role is NOT functioning"]
 serves: [workbench LAN 192.168.0.x]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-08, last_verified: 2026-09-10, upgrades: [], known_issues: ['wq1580 last-attempt 2026-09-10: no ssh target configured']}
+ops: {provisioned: 2026-06-08, last_verified: 2026-09-10, upgrades: [], known_issues: ['wq1580 last-attempt 2026-09-10: no ssh target configured', 'Tailscale node GL-BE3600 OFFLINE since 2026-06-17: the router is active and routing the workbench LAN, only its tailnet client is dead — acknowledged, not an outage (wq#1666)']}
