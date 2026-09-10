@@ -1,6 +1,5 @@
-# seeded-from: lumen_state current isis + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
-# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: isis, aliases: [], make_model: VERIFY, serial: VERIFY, location: rack}
+# seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: isis, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: F5KQT0GKF9VM, location: rack}
 status:
   status: active
   power: on
@@ -10,16 +9,21 @@ network:
   tailscale_ip: 100.100.129.24
   lan_ip: 192.168.8.171
   ssh: {user: isis, method: key}
-  nics: []
+  nics:
+    - {iface: enp12s0, mac: "00:3e:e1:c8:27:97", note: "fleet LAN (cabled, tg3 1G)"}
+    - {iface: enp11s0, mac: "00:3e:e1:c8:27:96", note: "onboard #1, unused"}
 hardware:
-  cpu: {model: Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz, cores: 12, gen: Ivy Bridge-EP (v2)}
-  ram: {size_gb: 60, type: VERIFY}
-  storage: [type: sata]
-  gpu: [{model: VERIFY (runs Qwen3-32B), vram_gb: VERIFY}]
-  board: {model: VERIFY, bios: VERIFY, quirks: ""}
-  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P5, ac_restore: VERIFY, recovery: "smart plug P5 power-cycle"}
+  cpu: {model: Intel Xeon E5-2697 v2 @ 2.70GHz, cores: 12, threads: 24, gen: Ivy Bridge-EP (v2)}
+  ram: {size_gb: 64, type: DDR3-1866 ECC RDIMM (Samsung M393B2G70DB0-CMA), dimms_used: 4, dimms_total: 4, ceiling_gb: 128}
+  storage: [{type: ssd, size: 256GB, model: APPLE SSD SM0256 (AHCI blade), serial: S23DNYBG353025, interface: sata, bay: "boot; ollama models ~58G"}]
+  gpu:
+    - {model: "AMD FirePro D300 (Curacao XT) 02:00.0 — amdgpu-bound, dpm=low, NOT an inference device (Qwen3-32B runs on CPU)", vram_gb: 2}
+    - {model: "AMD FirePro D300 (Curacao XT) 06:00.0 — boot_vga", vram_gb: 2}
+  board: {model: "Mac-F60DEB81FF30ACF6 (MacPro6,1)", bios: "BootROM 481.0.0.0.0 (2023-10-07, final for MacPro6,1)", quirks: "NEVER gate GPU-B on amdgpu-both-bound Macs (2026-06-25 overheating reversal). NEVER edit initramfs on headless Macs."}
+  power_hw: {psu_w: 450, ups: VERIFY, plug_id: P5, ac_restore: VERIFY, recovery: "smart plug P5 power-cycle (note: lumen_state p5.powers_node says UNTRACED-78W-load — plug binding unconfirmed)"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-30-generic}   # observed 2026-09-10
 roles: [worker, inference]
-services: [ollama]
+services: [ollama, gpu-lowpower.service, cpu-powercap (RAPL 75W)]
 serves: [isis-qwen3-32b, qwen36-local (qwen3.6:35b-a3b, LPP rung re-homed off Lumen 2026-08-12)]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-10, upgrades: [], known_issues: []}
+ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-10, upgrades: [], known_issues: ["P5 binding unconfirmed: isis.power_plug=P5 but p5.powers_node=UNTRACED-78W-load in lumen_state — trace before relying on P5 for recovery"]}

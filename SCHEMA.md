@@ -63,6 +63,11 @@ Grounded in NetBox's device + inventory-item model.
   never_reboot_unless_recoverable: true|false
   off_limits:      true|false          # Surface Pro business — never AI-integrate
 
+## software   (OBSERVED, volatile — a probe writes it, nobody hand-edits it; wq#1666)
+  os:              PRETTY_NAME from /etc/os-release, e.g. "Ubuntu 26.04 LTS"
+  kernel:          uname -r at last probe
+  A kernel string is true for one moment; treat it as "as of ops.last_verified", never as a spec.
+
 ## ops
   provisioned:     date
   last_verified:   date                # when specs were last confirmed against the box

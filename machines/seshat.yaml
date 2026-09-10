@@ -1,6 +1,5 @@
-# seeded-from: lumen_state current seshat + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
-# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: seshat, aliases: [], make_model: "Seneca PRO925430 mini PC", serial: VERIFY, location: rack}
+# seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: seshat, aliases: [], make_model: "Seneca PRO925430 mini PC", serial: "2420062", location: rack}
 status:
   status: active
   power: on
@@ -10,16 +9,29 @@ network:
   tailscale_ip: 100.121.243.124
   lan_ip: 192.168.8.219
   ssh: {user: seshat, method: key}
-  nics: []
+  nics:
+    - {iface: enp175s0, mac: "98:b7:85:24:35:74", note: "fleet LAN, static .219 — ALSO holds a stray dhcp lease (.237 on 2026-09-10): dhcp4 still enabled, see known_issues"}
+    - {iface: enp174s0, mac: "d8:5e:d3:81:57:7b", note: "unused"}
+    - {iface: eno1, mac: "d8:5e:d3:81:57:7a", note: "unused"}
 hardware:
-  cpu: {model: Intel i3-1115G4, cores: 2, gen: 'Tiger Lake (11th gen) [avx512]'}
-  ram: {size_gb: 16, type: VERIFY}
-  storage: [{type: NVMe, size: 1TB, model: SK hynix PC611}]
-  gpu: []
-  board: {model: Seneca PRO925430 (same platform as thoth), bios: VERIFY, quirks: ""}
+  cpu: {model: 11th Gen Intel Core i3-1115G4 @ 3.00GHz, cores: 2, threads: 4, gen: 'Tiger Lake (11th gen) [avx512]'}
+  ram: {size_gb: 16, type: DDR4-2400 SODIMM (Micron 16ATF2G64HZ-2G3E1), dimms_used: 1, dimms_total: 2, ceiling_gb: 64}
+  storage:
+    - {type: ssd, size: 128GB, model: Samsung MZMTE128 mSATA, serial: S1F0NSAG220353, interface: sata, bay: "BOOT (sda2 / 116G, 15G used) — the ONLY drive in the box as of 2026-09-10"}
+    # 1TB SK hynix PC611 NVMe: REMOVED ~2026-09-09 (was the old root). 1TB SK hynix S31 2.5in SATA for /data: NOT DETECTED — SATA port PHY offline, wq#1341 (physical: BIOS SATA Port 1 enable).
+  gpu: [{model: UHD Graphics G4 (integrated), vram_gb: 0}]
+  board: {model: GIGABYTE MTGU3CS-SD (board sn LK7U6101947), bios: "AMI F2 (2021-07-29)", quirks: "SATA port 2 PHY offline (0x94=00010001 vs thoth 00030003) until BIOS Port 1 is enabled (wq#1341)"}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P6, ac_restore: VERIFY, recovery: "smart plug P6 power-cycle"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-31-generic}   # observed 2026-09-10 (up 1d3h — rebooted ~09-09 for the drive swap)
 roles: [nextcloud]
 services: [nextcloud, collabora]
 serves: [Nextcloud + Collabora]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1, provisioned: 2026-06-01, last_verified: 2026-09-10, upgrades: [], known_issues: []}
+ops:
+  maint_tier: 1
+  provisioned: 2026-06-01
+  last_verified: 2026-09-10
+  upgrades: [{date: 2026-09-09, change: "1TB PC611 NVMe pulled; root now on 128GB mSATA. S31 /data drive not yet detected (wq#1341)."}]
+  known_issues:
+    - "NO /data drive present 2026-09-10: Nextcloud lives on the 116G root until the S31 links (wq#1341, seshat-s31 watcher armed on Lumen)"
+    - "enp175s0 carries a secondary DHCP address (.237) next to the static .219 — dhcp4 still on in netplan; ops-debt (wq ticket filed by wq#1666)"

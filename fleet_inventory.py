@@ -56,7 +56,7 @@ _IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 STATUS_ENUM = ("active", "standby", "bench", "in-storage", "decommissioned", "dead")
 UNMONITORED_STATUSES = frozenset({"decommissioned", "dead", "in-storage"})
 POWER_ENUM = ("on", "off", "plug-cut")
-TOP_LEVEL_KEYS = frozenset({"identity", "status", "network", "hardware", "roles",
+TOP_LEVEL_KEYS = frozenset({"identity", "status", "network", "hardware", "software", "roles",
                             "services", "serves", "governance", "ops"})
 MONITORING_DEFAULTS = {"interval_s": 60, "alert": True, "alert_desc": "", "gatus": True}
 

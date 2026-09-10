@@ -1,24 +1,28 @@
-# seeded-from: lumen_state current hathor + sentinel Gatus 1-nodes block (config.yaml, DISABLED 2026-07-18 entry)
-# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: hathor, aliases: [], make_model: VERIFY, serial: VERIFY, location: rack}
+# seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: hathor, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: F5KR806KF9VN, location: rack}
 status:
   status: active
-  power: on              # HEALTHY 2026-09-08: up 1w+, I/O board replaced by Frank + tested clean; do not bench
+  power: on              # HEALTHY 2026-09-08: up 1w+, I/O board replaced by Frank + tested clean; do not bench. Live 2026-09-10: up 9d
   monitor: true          # re-enabled 2026-09-08 (orch-seshat-s31): box is healthy and on; the stale parked state fired hathor:unparked/zombie ~380x
 network:
   tailscale_ip: 100.80.71.13
   lan_ip: 192.168.8.172
   ssh: {user: hathor, method: key}
-  nics: []
+  nics:
+    - {iface: enp12s0, mac: "00:3e:e1:c9:07:48", note: "fleet LAN (cabled)"}
+    - {iface: enp11s0, mac: "00:3e:e1:c9:07:47", note: "onboard #1, unused"}
 hardware:
-  cpu: {model: Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz, cores: 12, gen: Ivy Bridge-EP (v2)}
-  ram: {size_gb: 60, type: VERIFY}
-  storage: [type: sata]
-  gpu: [{model: "Curacao XT GCN1.1 [1002:6810] on amdgpu (GPU-A kept; GPU-B reverted to stock 2026-07-16)", vram_gb: VERIFY}]
-  board: {model: VERIFY, bios: VERIFY, quirks: ""}
-  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P3, ac_restore: VERIFY, recovery: "smart plug P3 on (Frank 2026-08-22: P3 is Hathor's plug, definitively)"}
+  cpu: {model: Intel Xeon E5-2697 v2 @ 2.70GHz, cores: 12, threads: 24, gen: Ivy Bridge-EP (v2)}
+  ram: {size_gb: 64, type: DDR3-1866 ECC RDIMM (Samsung M393B2G70DB0-CMA), dimms_used: 4, dimms_total: 4, ceiling_gb: 128}
+  storage: [{type: ssd, size: 256GB, model: APPLE SSD SM0256 (AHCI blade), serial: S23DNYBG389957, interface: sata, bay: boot}]
+  gpu:
+    - {model: "AMD FirePro D300 (Curacao XT GCN1.1 [1002:6810]) 02:00.0 — GPU-B, amdgpu-bound, dpm=low", vram_gb: 2}
+    - {model: "AMD FirePro D300 (Curacao XT) 06:00.0 — GPU-A / boot_vga", vram_gb: 2}
+  board: {model: "Mac-F60DEB81FF30ACF6 (MacPro6,1)", bios: "BootROM 474.0.0.0.0 (2023-01-13) — isis/nephthys run 481.0.0.0.0", quirks: "NEVER gate GPU-B on amdgpu-both-bound Macs (2026-06-25 overheating reversal); keep both GPUs bound + dpm=low. Standing rule: NEVER edit initramfs on headless Macs."}
+  power_hw: {psu_w: 450, ups: VERIFY, plug_id: P3, ac_restore: VERIFY, recovery: "smart plug P3 on (Frank 2026-08-22: P3 is Hathor's plug, definitively)"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-27-generic}   # observed 2026-09-10
 roles: [inference]
-services: [ollama, gpu-lowpower.service]
-serves: [hathor-lfm-1b]
+services: [ollama, gpu-lowpower.service, cpu-powercap (RAPL 75W)]
+serves: [hathor-lfm-1b, wq#1559 pilot lane (/home/hathor/pilots)]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-10, upgrades: [], known_issues: []}
+ops: {maint_tier: 1.5, provisioned: 2026-06-09, last_verified: 2026-09-10, upgrades: [{date: 2026-09-08, change: "I/O board replaced by Frank (wedge-on-boot fixed)"}], known_issues: []}

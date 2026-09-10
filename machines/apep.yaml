@@ -10,14 +10,19 @@ network:
   tailscale_ip: 100.82.2.72
   lan_ip: 192.168.0.161     # workbench LAN (BE9300 side), not 192.168.8.x
   ssh: {user: apep, method: key}
-  nics: []
+  nics:
+    - {iface: wlp1s0, mac: "98:8d:46:6e:22:d8", note: "WiFi, workbench LAN (active)"}
+    - {iface: enp5s0, mac: "50:a4:d0:92:06:5b", note: "wired, DOWN (no cable)"}
 hardware:
   cpu: {model: Intel Celeron N3350, cores: 2, gen: Apollo Lake}
   ram: {size_gb: 4, type: VERIFY}
-  storage: [type: sata]
+  storage:
+    - {type: ssd, size: 256GB, model: Samsung MZMTE256 M.2 SATA, serial: S1F1NYAF429841, interface: sata, bay: boot}
+    - {type: emmc, size: 58GB, model: onboard eMMC, serial: "0xf5608fd7", interface: mmc, bay: mmcblk1}
   gpu: []
   board: {model: AMI Apollolake, bios: "5.12 (2020-09-07)", quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
+software: {os: "Ubuntu 24.04.4 LTS", kernel: 6.8.0-138-generic}   # observed 2026-09-10; no dmidecode installed on the box
 roles: [test-station]
 services: []
 serves: [deployable test station (Frank 2026-08-12): BenQ USB camera for on-bench work]

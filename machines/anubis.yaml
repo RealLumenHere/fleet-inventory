@@ -1,6 +1,5 @@
-# seeded-from: lumen_state current anubis + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
-# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: anubis, aliases: [], make_model: VERIFY, serial: VERIFY, location: rack}
+# seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: anubis, aliases: [], make_model: "Dell OptiPlex 3090 UFF", serial: 1XLN9R3, location: rack}
 status:
   status: active
   power: on
@@ -10,14 +9,15 @@ network:
   tailscale_ip: 100.121.17.5
   lan_ip: 192.168.8.232
   ssh: {user: anubis, method: key}
-  nics: []
+  nics: [{iface: enp2s0, mac: "c0:25:a5:d0:66:d1", note: "fleet LAN"}]
 hardware:
-  cpu: {model: 11th Gen Intel(R) Core(TM) i5-1145G7 @ 2.60GHz, cores: 4, gen: '11th Gen [avx512]'}
-  ram: {size_gb: 30, type: VERIFY}
-  storage: [type: nvme]
-  gpu: []
-  board: {model: VERIFY, bios: VERIFY, quirks: ""}
+  cpu: {model: 11th Gen Intel Core i5-1145G7 @ 2.60GHz, cores: 4, threads: 8, gen: 'Tiger Lake (11th gen) [avx512]'}
+  ram: {size_gb: 32, type: DDR4-2400 SODIMM (Micron 16ATF2G64HZ-2G3E1), dimms_used: 2, dimms_total: 2, ceiling_gb: 64}
+  storage: [{type: nvme, size: 256GB, model: Kingston OM3PDP3256B-A01, serial: 50026B76856E81A8, bay: boot}]
+  gpu: [{model: Iris Xe (integrated), vram_gb: 0}]
+  board: {model: Dell 05G6P6 rev A00, bios: "1.19.0 (2023-03-17)", quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P9, ac_restore: VERIFY, recovery: "smart plug P9 power-cycle"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-30-generic}   # observed 2026-09-10
 roles: [gitea, backup]
 services: [gitea, borg repo, ntfy (post-migration)]
 serves: [Gitea (lumen/* repos), Borg backup repository]

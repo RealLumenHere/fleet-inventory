@@ -1,7 +1,5 @@
-# seeded-from: lumen_state current sobek + sentinel Gatus 1-nodes block (config.yaml)
-# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-# wq#1456: ssh.user=sobek from lumen-bin PR#66 / wq#1447 (sobek@100.86.156.91), FLEET_MAP 'host/user sobek'; maint_tier per fleet-maint-assemble A11 §5 tiers
-identity: {name: sobek, aliases: [], make_model: VERIFY, serial: VERIFY, location: rack}
+# seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: sobek, aliases: [], make_model: "Trigkey Green G4 (N100 mini-PC, unit-2)", serial: BN1003LH12393, location: rack}
 status:
   status: active
   power: on
@@ -11,16 +9,19 @@ network:
   tailscale_ip: 100.86.156.91
   lan_ip: 192.168.8.178
   ssh: {user: sobek, method: key}
-  nics: []
+  nics:
+    - {iface: enp1s0, mac: "7c:83:34:bc:f1:c1", note: "static netplan, fleet LAN"}
+    - {iface: wlo1, mac: "74:3a:f4:41:2b:de", note: "WiFi, unused"}
 hardware:
-  cpu: {model: Intel(R) N100, cores: 4, gen: VERIFY}
-  ram: {size_gb: 14, type: VERIFY}
-  storage: [type: nvme]
-  gpu: []
-  board: {model: VERIFY, bios: VERIFY, quirks: ""}
-  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
+  cpu: {model: Intel N100, cores: 4, threads: 4, gen: Alder Lake-N}
+  ram: {size_gb: 16, type: DDR4-3200 SODIMM, dimms_used: 1, dimms_total: 2, ceiling_gb: VERIFY}
+  storage: [{type: nvme, size: 512GB, model: "generic 'PCIe SSD' (OEM)", serial: BF1907380A4800707715, bay: boot}]
+  gpu: [{model: UHD Graphics (Alder Lake-N, integrated), vram_gb: 0}]
+  board: {model: Trigkey Green G4 rev 10, bios: "ADLNV104 (2023-07-17)", quirks: "AC-restore=PowerOn, RC6=Enabled, PL1=12W — set by Frank 2026-07-17"}
+  power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: none, ac_restore: "PowerOn (BIOS, Frank 2026-07-17)", recovery: "PHYSICAL — UNMETERED, on no Tapo plug (lumen_state sobek.provisioned; the 'P5' assumption was wrong)"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-30-generic}   # observed 2026-09-10
 roles: [vault-standby, pg-standby]
-services: [postgresql (sobek_slot streaming replica of Maat), vaultwarden (parked promote payload)]
+services: [postgresql (sobek_slot streaming replica of Maat), vaultwarden (parked promote payload), vw-sobek-datasync.timer]
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
 ops: {maint_tier: 3, provisioned: 2026-07-31, last_verified: 2026-09-10, upgrades: [], known_issues: ["HA auto-promote is ARMED and pointed at sobek (verified 2026-08-13)."]}

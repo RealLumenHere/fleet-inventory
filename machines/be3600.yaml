@@ -7,7 +7,7 @@ status:
   monitor: false         # router, not a compute node; backhaul monitoring lives in Gatus group 0-backhaul (not derived from inventory)
 network:
   tailscale_ip: 100.81.177.14
-  lan_ip: VERIFY             # gateway of the 192.168.0.x workbench LAN
+  lan_ip: 192.168.0.1        # gateway of the 192.168.0.x workbench LAN — grade B: apep's default route + ARP a8:6e:84:ad:0f:14 (wq#1666 2026-09-10)
   ssh: {user: VERIFY, method: VERIFY}
   nics: []
 hardware:
@@ -18,7 +18,7 @@ hardware:
   board: {model: GL-BE3600, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: "power-cycle"}
 roles: [router]
-services: [tailscale (subnet/exit node — VERIFY)]
+services: ["tailscale node GL-BE3600 — OFFLINE on the tailnet since 2026-06-17 (85d at 2026-09-10); routing works (apep reaches the tailnet through it) but any subnet/exit-node role is NOT functioning"]
 serves: [workbench LAN 192.168.0.x]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-08, last_verified: 2026-09-07, upgrades: [], known_issues: ['wq1580 last-attempt 2026-09-10: no ssh target configured']}
+ops: {provisioned: 2026-06-08, last_verified: 2026-09-10, upgrades: [], known_issues: ['wq1580 last-attempt 2026-09-10: no ssh target configured']}

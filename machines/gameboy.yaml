@@ -1,6 +1,5 @@
-# seeded-from: lumen_state current gameboy + sentinel Gatus 1-nodes block (config.yaml)
-# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: gameboy, aliases: [kiosk], make_model: "Microsoft Surface Pro 6", serial: VERIFY, location: VERIFY}
+# seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: gameboy, aliases: [kiosk, gameboy-pc], make_model: "Microsoft Surface Pro 6", serial: "032633490753", location: VERIFY}
 status:
   status: active
   power: on
@@ -8,18 +7,19 @@ status:
   monitoring: {interval_s: 60, alert: true, alert_desc: "gameboy (Surface Pro 6 pokemon kiosk) unreachable", gatus: true}
 network:
   tailscale_ip: 100.118.56.59
-  lan_ip: 192.168.8.190
+  lan_ip: 192.168.8.190     # static via nmcli
   ssh: {user: gameboy, method: key}
-  nics: []
+  nics: [{iface: wlp1s0, mac: "b8:31:b5:7e:eb:05", note: "WiFi only (powersave off)"}]
 hardware:
-  cpu: {model: Intel i5-8350U, cores: 4, gen: Kaby Lake R (8th gen)}
-  ram: {size_gb: 8, type: LPDDR3 (soldered), ceiling_gb: 8}
-  storage: [{type: NVMe, size: 256GB}]
+  cpu: {model: Intel Core i5-8350U @ 1.70GHz, cores: 4, threads: 8, gen: Kaby Lake R (8th gen)}
+  ram: {size_gb: 8, type: LPDDR3-1867 soldered (2x4GB), dimms_used: 2, dimms_total: 2, ceiling_gb: 8}
+  storage: [{type: nvme, size: 256GB, model: Samsung KUS030202M-B000, serial: S3VDNY2K885184, bay: "boot; 35% worn / 47TB written (2026-08-01)"}]
   gpu: [{model: UHD 620 (integrated), vram_gb: 0}]
-  board: {model: Surface Pro 6, bios: VERIFY, quirks: "kernel 6.19.8-surface, iptsd for touch"}
-  power_hw: {psu_w: VERIFY, ups: false, plug_id: E1, ac_restore: VERIFY, recovery: "smart plug E1 (Athom V3, ex-P12) — battery-backed device"}
+  board: {model: Surface Pro 6, bios: "UEFI 239.779.768", quirks: "kernel 6.19.8-surface-3 (linux-surface, GRUB-pinned), iptsd for touch; battery 98.8% / 12 cycles = built-in UPS"}
+  power_hw: {psu_w: VERIFY, ups: "internal battery", plug_id: E1, ac_restore: VERIFY, recovery: "smart plug E1 (Athom V3, ex-P12; the sole in-service Tasmota outlet) — battery-backed device"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 6.19.8-surface-3}   # observed 2026-09-10
 roles: [pokemon-kiosk]
-services: [kiosk (pokemon emulation playground)]
+services: [kiosk (pokemon emulation playground), lumen-pokemon-live emulator host]
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
 ops: {maint_tier: 1, provisioned: 2026-08-01, last_verified: 2026-09-10, upgrades: [{date: 2026-08-07, change: "energy-efficiency mods verified complete (RAM trim, kiosk hardening)"}], known_issues: []}

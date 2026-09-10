@@ -1,4 +1,5 @@
-identity: {name: lumen, aliases: [], make_model: Dell Precision T5810, serial: VERIFY, location: rack}
+# seeded-from: lumen_state + operator quick-ref (2026-09-07); hardware verified live wq#1666 2026-09-10 (dmidecode/lsblk/lscpu/ip link)
+identity: {name: lumen, aliases: [lumen-1], make_model: "Dell Precision Tower 5810", serial: FK6FV52, location: rack}
 status:
   status: active
   power: on
@@ -8,16 +9,36 @@ network:
   tailscale_ip: 100.117.66.102
   lan_ip: 192.168.8.160
   ssh: {user: lumen, method: key}
-  nics: [{iface: enp0s25, mac: "64:00:6a:58:fc:d8", note: "NEVER SPOOF"}]
+  nics:
+    - {iface: ens1, mac: "3c:7c:3f:a6:be:dd", note: "ACTIVE PRIMARY — Realtek RTL8125 2.5GbE PCIe 01:00.0, static .160, default route metric 100"}
+    - {iface: enp0s25, mac: "64:00:6a:58:fc:d8", note: "NEVER SPOOF — onboard Intel I217-LM 00:19.0. No netdev bound as of 2026-09-10 (no cable, unconfigured); failover path only. If re-added to netplan: optional:true + route metric >100"}
 hardware:
-  cpu: {model: Intel(R) Xeon(R) CPU E5-2699 v4 @ 2.20GHz (Xeon E5-16xx/26xx v3/v4), cores: 22, gen: Haswell/Broadwell-EP}
-  ram: {size_gb: 60, type: DDR4-ECC, speed: VERIFY, ceiling_gb: 256}
-  storage: [{type: sata, size: 1.8T, interface: sata}]
-  gpu: []
-  board: {model: T5810 (C612), bios: VERIFY, quirks: ""}
-  power_hw: {psu_w: 685, ups: VERIFY, plug_id: P11, ac_restore: VERIFY, recovery: "on-site power button"}
+  cpu: {model: Intel Xeon E5-2699 v4 @ 2.20GHz, cores: 22, threads: 44, gen: Broadwell-EP (AVX2 only, no AVX-512)}
+  ram: {size_gb: 64, type: DDR4-2667 ECC RDIMM single-rank (Micron 18ASF2G72XF12G6V21A), speed: "2667 MT/s rated, runs 2400 per T5810 spec", dimms_used: 4, dimms_total: 8, ceiling_gb: 256}
+  storage:   # keyed by SERIAL — /dev/nvmeN names are NOT stable across boots on this box (970 PRO was nvme4 on 2026-07-16, nvme5 on 2026-09-10)
+    - {type: nvme, size: 512GB, model: Samsung 970 PRO, serial: S5JYNS0RB07557V, bay: "BOOT: p1 /boot/efi, p2 /boot, p3 LVM ubuntu-vg -> /"}
+    - {type: nvme, size: 256GB, model: Samsung PM951 MZFLV256HCHP, serial: S245NAAGC69747, bay: "md0 RAID5 member -> /data/lumen"}
+    - {type: nvme, size: 256GB, model: Samsung PM951 MZFLV256HCHP, serial: S245NX0H768738, bay: "md0 RAID5 member"}
+    - {type: nvme, size: 256GB, model: Samsung PM951 MZFLV256HCHP, serial: S245NYAG834024, bay: "md0 RAID5 member"}
+    - {type: nvme, size: 512GB, model: Samsung PM951 MZFLV512HCJH, serial: S243NX0H521011, bay: "md1 RAID0 'lumen:scratch' member -> /scratch"}
+    - {type: nvme, size: 512GB, model: Samsung PM951 MZFLV512HCJH, serial: S243NXAH321366, bay: "md1 RAID0 member"}
+    - {type: nvme, size: 512GB, model: Samsung PM951 MZFLV512HCJH, serial: S243NX0H503061, bay: "md1 RAID0 member"}
+    - {type: nvme, size: 512GB, model: Samsung PM961 MZFLW512HMJP, serial: S319NX0J110191, bay: "md1 RAID0 member"}
+    - {type: hdd, size: 2TB, model: Seagate ST2000LM015, serial: ZDZRTG6X, interface: sata, bay: "sda — backup drive (wq#330); NOT the old Patriot Burst 240G, which is gone"}
+  gpu: [{model: "AMD Embedded Radeon E9170 / Lexa PRO (PCI 0d:00.0)", vram_gb: 2, note: "VIDEO OUTPUT ONLY — Frank standing directive 2026-08-11: never compute/inference on it"}]
+  board: {model: Dell 0K240Y rev A02 (C612), bios: "A34 (2020-10-19)", quirks: ""}
+  power_hw: {psu_w: 685, ups: VERIFY, plug_id: P11, ac_restore: "enabled (auto-powers-on after AC loss, Frank 2026-07-15)", recovery: "on-site power button"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-30-generic}   # observed 2026-09-10 — volatile, will be generated once SCHEMA gains the field
 roles: [orchestrator-host, ai-services, litellm-gateway, dispatcher, minerva, commander-mcp]
 services: [litellm, lumen-foreman-dispatch, dispatch-watchdog, minerva-*, sentinel]
 serves: [litellm :4000 gateway for the whole fleet]
 governance: {crown_jewel: true, never_restart: false, off_limits: false}
-ops: {maint_tier: 5, provisioned: VERIFY, last_verified: 2026-09-10, upgrades: [], known_issues: ["OS 26.04"]}
+ops:
+  maint_tier: 5
+  provisioned: VERIFY
+  last_verified: 2026-09-10
+  upgrades:
+    - {date: 2026-07-11, change: "RAM 40GB -> 64GB (4x16 DDR4-2667 matched kit)"}
+  known_issues:
+    - "ECC: DIMM4 (SN 2106727E) corrected-error suspect since 2026-08-10/11 (lumen_state lumen.ram_ecc_suspect) — reseat-then-replace candidate, confirm with memtest86+"
+    - "enp0s25 (I217-LM) has no netdev bound as of 2026-09-10 — the NEVER-SPOOF NIC is dormant, ens1 is the only link"

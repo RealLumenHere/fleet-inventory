@@ -3,7 +3,7 @@
 identity: {name: pbox, aliases: [], make_model: VERIFY (Win11 gaming box), serial: VERIFY, location: storage}
 status:
   status: decommissioned
-  power: off
+  power: on              # tailnet device PBox last seen 2026-09-10 — powered and online, just NOT fleet (Frank's gaming box)
   monitor: false         # DECOMMISSIONED — removed from fleet, do not reach
   decommissioned: {date: 2026-08-28, reason: "Frank 2026-08-28: removed from fleet. Already retired from fleet/inference duty; was a BGB-interop client."}
 network:
@@ -22,4 +22,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: true}
-ops: {provisioned: 2026-07-06, last_verified: 2026-09-07, upgrades: [], known_issues: ["RETIRED 2026-08-28 — do not monitor/reach/report.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}
+ops: {provisioned: 2026-07-06, last_verified: 2026-09-10, upgrades: [], known_issues: ["RETIRED 2026-08-28 — do not monitor/reach/report.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}

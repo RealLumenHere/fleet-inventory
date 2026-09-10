@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current toilet (toilet.lan_ip / toilet.tailscale_ip / toilet.status online, all since 2026-06-17)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the device
-identity: {name: toilet, aliases: [], make_model: VERIFY, serial: VERIFY, location: VERIFY}
+identity: {name: toilet, aliases: [toilet-940X5N], make_model: VERIFY, serial: VERIFY, location: "Frederick MD (lumen_state toilet.location, unverified since 2026-01-01)"}
 status:
   status: active
   power: on
@@ -21,4 +21,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-17, last_verified: 2026-09-07, upgrades: [], known_issues: ["ROLE UNKNOWN: tailnet device 100.70.94.19 on 192.168.50.111 has no recorded purpose, owner, or ssh path. Frank to classify; until then monitor:false.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}
+ops: {provisioned: 2026-06-17, last_verified: 2026-09-10, upgrades: [], known_issues: ["ROLE UNKNOWN: tailnet device 100.70.94.19 on 192.168.50.111 has no recorded purpose, owner, or ssh path. Frank to classify; until then monitor:false.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}

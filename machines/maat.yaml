@@ -1,4 +1,5 @@
-identity: {name: maat, aliases: ["Ma'at"], make_model: "mini-PC (WeiBu ADL-N board)", serial: VERIFY, location: rack}
+# seeded-from: lumen_state + operator quick-ref (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: maat, aliases: ["Ma'at"], make_model: "WeiBu ADL-N mini-PC (N100)", serial: WBGMN9E0242800020, location: rack}
 status:
   status: active
   power: on
@@ -8,14 +9,15 @@ network:
   tailscale_ip: 100.105.219.34
   lan_ip: 192.168.8.202
   ssh: {user: maam, method: key}
-  nics: []
+  nics: [{iface: enp2s0, mac: "00:e0:4c:0a:16:b5", note: "fleet LAN; PG binds LAN only, Vaultwarden binds TS only (by design)"}]
 hardware:
-  cpu: {model: Intel N-series (Alder Lake-N), cores: 4, gen: ADL-N}
-  ram: {size_gb: 14, type: VERIFY, ceiling_gb: VERIFY}
-  storage: [type: nvme]
-  gpu: []
-  board: {model: WeiBu ADL-N, bios: F2, quirks: "Restore-on-AC-Power-Loss does NOT persist (no nvram) — stays dead after any power event; needs physical power-on. Root cause of 07-15 + 09-03 multi-day outages."}
-  power_hw: {psu_w: VERIFY, ups: true, plug_id: P4, ac_restore: "SET but does not hold (board quirk)", recovery: "PHYSICAL power button (won't auto-boot)"}
+  cpu: {model: Intel N100, cores: 4, threads: 4, gen: Alder Lake-N}
+  ram: {size_gb: 16, type: DDR4-3200 SODIMM (Crucial CT16G4SFRA32A.M16FR), dimms_used: 1, dimms_total: 1, ceiling_gb: VERIFY}
+  storage: [{type: nvme, size: 512GB, model: Micron 2200S, serial: 2020296E8024, bay: boot}]
+  gpu: [{model: UHD Graphics (Alder Lake-N, integrated), vram_gb: 0}]
+  board: {model: WeiBu ADL-N (Prod), bios: "5.27 (2024-01-17)", quirks: "Restore-on-AC-Power-Loss does NOT persist (no nvram) — stays dead after any power event; needs physical power-on. Root cause of 07-15 + 09-03 multi-day outages. (Previous 'bios: F2' was pasted from the Seneca boards — wrong.)"}
+  power_hw: {psu_w: VERIFY, ups: true, plug_id: P4, ac_restore: "SET (Frank 2026-07-17) but does not hold (board quirk)", recovery: "PHYSICAL power button (won't auto-boot)"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-30-generic}   # observed 2026-09-10; uptime 6d = rebooted after the 09-03 outage
 roles: [vault, ha-primary, pg-primary]
 services: [vaultwarden (compose /opt/maat-vaultwarden), postgres]
 serves: [Vaultwarden password vault; PG primary streaming to bes+sobek]

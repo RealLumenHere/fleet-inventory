@@ -1,7 +1,5 @@
-# seeded-from: lumen_state current thoth + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
-# seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-# wq#1456: ssh.key from rotate-fleet-pw.sh TKEY (thoth uses its own key file); maint_tier 1 (A11 §5 leaf)
-identity: {name: thoth, aliases: [], make_model: "Seneca MP mini PC", serial: VERIFY, location: rack}
+# seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
+identity: {name: thoth, aliases: [seneca], make_model: "Seneca PRO986222 mini PC", serial: "2581111", location: rack}
 status:
   status: active
   power: on
@@ -11,16 +9,29 @@ network:
   tailscale_ip: 100.75.1.108
   lan_ip: 192.168.8.218
   ssh: {user: thoth, method: key, key: /home/lumen/.ssh/thoth_ed25519}
-  nics: []
+  nics:
+    - {iface: enp174s0, mac: "98:b7:85:24:35:43", note: "fleet LAN"}
+    - {iface: enp173s0, mac: "74:56:3c:42:ca:7c", note: "unused"}
+    - {iface: eno1, mac: "74:56:3c:42:ca:7b", note: "unused"}
+    - {iface: wg0, mac: "", note: "WireGuard 10.5.0.2/16 (lumen_state thoth.wg_endpoint)"}
 hardware:
-  cpu: {model: Intel i3-1115G4, cores: 2, gen: 'Tiger Lake (11th gen) [avx512]'}
-  ram: {size_gb: 14, type: VERIFY}
-  storage: [type: sata]
-  gpu: []
-  board: {model: Seneca MP (same platform as seshat), bios: VERIFY, quirks: ""}
+  cpu: {model: 11th Gen Intel Core i3-1115G4 @ 3.00GHz, cores: 2, threads: 4, gen: 'Tiger Lake (11th gen) [avx512]'}
+  ram: {size_gb: 16, type: DDR4-3200 SODIMM (Samsung M471A1K43EB1-CWE), dimms_used: 2, dimms_total: 2, ceiling_gb: 64}
+  storage:
+    - {type: ssd, size: 256GB, model: Samsung MZMTE256 mSATA, serial: S1F1NYAF637153, interface: sata, bay: "boot/root (sda)"}
+    - {type: hdd, size: 4TB, model: WD Blue WDS400T2B0A, serial: "211146800508", interface: sata, bay: "sdb2 ext4 -> /mnt/storage (media; NFSv4 export to Thor)"}
+  gpu: [{model: UHD Graphics G4 (integrated), vram_gb: 0}]
+  board: {model: GIGABYTE MTGU3CS-SD (board sn MI1N8201244; same board as seshat, different SKU), bios: "AMI F2 (2021-07-29)", quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P10, ac_restore: VERIFY, recovery: "smart plug P10 power-cycle"}
+software: {os: "Ubuntu 26.04 LTS", kernel: 7.0.0-30-generic}   # observed 2026-09-10 (up 1 week)
 roles: [media, torrent]
-services: [plex, torrent client]
+services: [plex, torrent client, wireguard (wg0)]
 serves: [Plex / media library; candidate host for the Pico serprog rig (always-on, keeps Lumen untouched)]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1, provisioned: 2026-04-25, last_verified: 2026-09-10, upgrades: [], known_issues: ["tailnet-OFFLINE since ~2026-09-02: LAN 192.168.8.218 pings (L3 up) but :22 does not answer — live example for DESIGN_SOT test (iv); Gatus alert must keep firing after regeneration."]}
+ops:
+  maint_tier: 1
+  provisioned: 2026-04-25
+  last_verified: 2026-09-10
+  upgrades: []
+  known_issues:
+    - "HISTORY: tailnet-OFFLINE ~2026-09-02 -> ~2026-09-03 (rebooted after the BE9300 reset); RECOVERED — online + key ssh verified 2026-09-10. Was the live example for DESIGN_SOT test (iv). Note WDS400T2B0A is an SSD marketed as WD Blue SATA; 'hdd' type above means bulk drive, not spinning-verified"
