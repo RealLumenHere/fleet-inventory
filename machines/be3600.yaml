@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  storage: [type: VERIFY]
   gpu: []
   board: {model: GL-BE3600, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: "power-cycle"}
@@ -21,4 +21,4 @@ roles: [router]
 services: [tailscale (subnet/exit node — VERIFY)]
 serves: [workbench LAN 192.168.0.x]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-08, last_verified: 2026-09-07, upgrades: [], known_issues: []}
+ops: {provisioned: 2026-06-08, last_verified: 2026-09-07, upgrades: [], known_issues: ['wq1580 last-attempt 2026-09-10: no ssh target configured']}

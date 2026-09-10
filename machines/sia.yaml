@@ -13,9 +13,9 @@ network:
   ssh: {user: sia, method: key}
   nics: [{iface: VERIFY, mac: VERIFY, note: "2.5G RTL8125 active on fleet LAN"}]
 hardware:
-  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
-  ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  cpu: {model: Intel(R) N100, cores: 4, gen: VERIFY}
+  ram: {size_gb: 14, type: VERIFY}
+  storage: [type: nvme]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P8, ac_restore: VERIFY, recovery: "smart plug P8 power-cycle"}
@@ -23,4 +23,4 @@ roles: [worker]
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1, provisioned: 2026-07-11, last_verified: 2026-09-07, upgrades: [], known_issues: ["Was absent from Gatus 1-nodes until wq#1453 (slice B regenerates the block from this file).", "SSH flakiness noted 2026-07-11 (lumen_state sia.status) — verify ssh user + key path."]}
+ops: {maint_tier: 1, provisioned: 2026-07-11, last_verified: 2026-09-10, upgrades: [], known_issues: ["Was absent from Gatus 1-nodes until wq#1453 (slice B regenerates the block from this file).", "SSH flakiness noted 2026-07-11 (lumen_state sia.status) — verify ssh user + key path."]}

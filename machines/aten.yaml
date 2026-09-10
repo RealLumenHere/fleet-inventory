@@ -21,4 +21,4 @@ roles: [firmware-workstation]
 services: []
 serves: [RTD/Screenpad panel firmware capture/create/archive (wq#355 Path B: EDID capture + RTD tooling sandbox + CH341A-I2C/DDC)]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-07-21, last_verified: 2026-09-07, upgrades: [], known_issues: ["Provisioning since 2026-07-21 — set status:active + IPs + monitor:true once on the tailnet."]}
+ops: {provisioned: 2026-07-21, last_verified: 2026-09-07, upgrades: [], known_issues: ["Provisioning since 2026-07-21 — set status:active + IPs + monitor:true once on the tailnet.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}

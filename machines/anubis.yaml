@@ -12,9 +12,9 @@ network:
   ssh: {user: anubis, method: key}
   nics: []
 hardware:
-  cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
-  ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  cpu: {model: 11th Gen Intel(R) Core(TM) i5-1145G7 @ 2.60GHz, cores: 4, gen: '11th Gen [avx512]'}
+  ram: {size_gb: 30, type: VERIFY}
+  storage: [type: nvme]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P9, ac_restore: VERIFY, recovery: "smart plug P9 power-cycle"}
@@ -22,4 +22,4 @@ roles: [gitea, backup]
 services: [gitea, borg repo, ntfy (post-migration)]
 serves: [Gitea (lumen/* repos), Borg backup repository]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 2, provisioned: 2026-06-01, last_verified: 2026-09-07, upgrades: [], known_issues: []}
+ops: {maint_tier: 2, provisioned: 2026-06-01, last_verified: 2026-09-10, upgrades: [], known_issues: []}

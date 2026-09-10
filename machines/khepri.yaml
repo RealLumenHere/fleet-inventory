@@ -15,7 +15,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  storage: [type: VERIFY]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: none, ac_restore: VERIFY, recovery: "PHYSICAL — no smart plug (Frank 2026-08-22: P3 is Hathor's, khepri holds none)"}
@@ -23,4 +23,4 @@ roles: [staging]
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-07-12, last_verified: 2026-09-07, upgrades: [], known_issues: []}
+ops: {provisioned: 2026-07-12, last_verified: 2026-09-07, upgrades: [], known_issues: ['wq1580 last-attempt 2026-09-10: ssh/lscpu failed: ssh: connect to host 100.120.16.78 port 22: Connection timed out (confirmed via tailscale ping too — offline, last seen 26d; see wq#1620, lumen_state khepri.status corrected same day)']}

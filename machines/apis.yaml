@@ -21,4 +21,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-18, last_verified: 2026-09-07, upgrades: [], known_issues: ["DEAD confirmed 2026-08-13. Former RE/forensics + parts-photography bench (BenQ ideaCam S1 camera) — role and camera to be rehomed with the replacement."]}
+ops: {provisioned: 2026-06-18, last_verified: 2026-09-07, upgrades: [], known_issues: ["DEAD confirmed 2026-08-13. Former RE/forensics + parts-photography bench (BenQ ideaCam S1 camera) — role and camera to be rehomed with the replacement.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}

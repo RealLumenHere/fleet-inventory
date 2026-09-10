@@ -10,9 +10,9 @@ network:
   ssh: {user: thor, method: key}
   nics: []
 hardware:
-  cpu: {model: VERIFY (11th-gen i5/i7), cores: VERIFY, gen: Tiger Lake}
-  ram: {size_gb: VERIFY, type: LPDDR4x, ceiling_gb: VERIFY (soldered)}
-  storage: [{type: NVMe, size: VERIFY}]
+  cpu: {model: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz (11th-gen i5/i7), cores: 4, gen: 'Tiger Lake [avx512]'}
+  ram: {size_gb: 15, type: LPDDR4x, ceiling_gb: VERIFY (soldered)}
+  storage: [{type: NVMe, size: 7.6G}]
   gpu: [{model: Iris Xe (integrated), vram_gb: 0}]
   board: {model: Galaxy Book Pro 360, quirks: "LAPTOP: suspends on lid-close/idle + battery-dependent -> drops off the fleet (down 3h 2026-09-04). No smart plug -> no remote recovery when asleep. EC fan quirk (reset 07-16)."}
   power_hw: {ups: false, plug_id: none, recovery: "PHYSICAL: open lid / power on. No remote path when suspended."}
@@ -22,7 +22,7 @@ serves: [system-wide TTS; Claude Command Center dashboard]
 governance: {crown_jewel: false, never_restart: true, off_limits: false}
 ops:
   provisioned: VERIFY
-  last_verified: 2026-09-04
+  last_verified: 2026-09-10
   upgrades: []
   known_issues:
     - "DURABLE FIX PENDING (apply when back up): set logind HandleLidSwitch=ignore + HandleLidSwitchExternalPower=ignore + disable idle-suspend, so a fleet-node laptop stops dropping off on lid-close/idle. Root cause of recurring Thor outages."

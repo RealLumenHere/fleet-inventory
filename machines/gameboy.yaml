@@ -22,4 +22,4 @@ roles: [pokemon-kiosk]
 services: [kiosk (pokemon emulation playground)]
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1, provisioned: 2026-08-01, last_verified: 2026-09-07, upgrades: [{date: 2026-08-07, change: "energy-efficiency mods verified complete (RAM trim, kiosk hardening)"}], known_issues: []}
+ops: {maint_tier: 1, provisioned: 2026-08-01, last_verified: 2026-09-10, upgrades: [{date: 2026-08-07, change: "energy-efficiency mods verified complete (RAM trim, kiosk hardening)"}], known_issues: []}

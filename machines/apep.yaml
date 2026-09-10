@@ -14,7 +14,7 @@ network:
 hardware:
   cpu: {model: Intel Celeron N3350, cores: 2, gen: Apollo Lake}
   ram: {size_gb: 4, type: VERIFY}
-  storage: [{type: VERIFY}]
+  storage: [type: sata]
   gpu: []
   board: {model: AMI Apollolake, bios: "5.12 (2020-09-07)", quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
@@ -22,4 +22,4 @@ roles: [test-station]
 services: []
 serves: [deployable test station (Frank 2026-08-12): BenQ USB camera for on-bench work]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1, provisioned: 2026-06-02, last_verified: 2026-09-07, upgrades: [], known_issues: ["Transient WiFi unreach ~2026-08-09 (BE9300 relocation suspected), self-recovered."]}
+ops: {maint_tier: 1, provisioned: 2026-06-02, last_verified: 2026-09-10, upgrades: [], known_issues: ["Transient WiFi unreach ~2026-08-09 (BE9300 relocation suspected), self-recovered."]}

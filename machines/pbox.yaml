@@ -14,7 +14,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  storage: [type: VERIFY]
   gpu: [{model: VERIFY, vram_gb: VERIFY}]
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: none, ac_restore: n/a, recovery: "n/a (retired)"}
@@ -22,4 +22,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: true}
-ops: {provisioned: 2026-07-06, last_verified: 2026-09-07, upgrades: [], known_issues: ["RETIRED 2026-08-28 — do not monitor/reach/report."]}
+ops: {provisioned: 2026-07-06, last_verified: 2026-09-07, upgrades: [], known_issues: ["RETIRED 2026-08-28 — do not monitor/reach/report.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}
