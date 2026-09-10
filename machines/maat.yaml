@@ -10,9 +10,9 @@ network:
   ssh: {user: maam, method: key}
   nics: []
 hardware:
-  cpu: {model: Intel N-series (Alder Lake-N), cores: VERIFY, gen: ADL-N}
-  ram: {size_gb: VERIFY, type: VERIFY, ceiling_gb: VERIFY}
-  storage: [{type: VERIFY}]
+  cpu: {model: Intel N-series (Alder Lake-N), cores: 4, gen: ADL-N}
+  ram: {size_gb: 14, type: VERIFY, ceiling_gb: VERIFY}
+  storage: [type: nvme]
   gpu: []
   board: {model: WeiBu ADL-N, bios: F2, quirks: "Restore-on-AC-Power-Loss does NOT persist (no nvram) — stays dead after any power event; needs physical power-on. Root cause of 07-15 + 09-03 multi-day outages."}
   power_hw: {psu_w: VERIFY, ups: true, plug_id: P4, ac_restore: "SET but does not hold (board quirk)", recovery: "PHYSICAL power button (won't auto-boot)"}
@@ -20,4 +20,4 @@ roles: [vault, ha-primary, pg-primary]
 services: [vaultwarden (compose /opt/maat-vaultwarden), postgres]
 serves: [Vaultwarden password vault; PG primary streaming to bes+sobek]
 governance: {crown_jewel: true, never_restart: false, never_reboot_unless_recoverable: true, off_limits: false}
-ops: {maint_tier: 4, provisioned: VERIFY, last_verified: 2026-09-04, upgrades: [], known_issues: ["AC-restore quirk = one power blip -> multi-day dark vault; needs a board that holds the setting or an external auto-power-on module"]}
+ops: {maint_tier: 4, provisioned: VERIFY, last_verified: 2026-09-10, upgrades: [], known_issues: ["AC-restore quirk = one power blip -> multi-day dark vault; needs a board that holds the setting or an external auto-power-on module"]}

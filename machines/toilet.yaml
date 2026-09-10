@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  storage: [type: VERIFY]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}
@@ -21,4 +21,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {provisioned: 2026-06-17, last_verified: 2026-09-07, upgrades: [], known_issues: ["ROLE UNKNOWN: tailnet device 100.70.94.19 on 192.168.50.111 has no recorded purpose, owner, or ssh path. Frank to classify; until then monitor:false."]}
+ops: {provisioned: 2026-06-17, last_verified: 2026-09-07, upgrades: [], known_issues: ["ROLE UNKNOWN: tailnet device 100.70.94.19 on 192.168.50.111 has no recorded purpose, owner, or ssh path. Frank to classify; until then monitor:false.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}

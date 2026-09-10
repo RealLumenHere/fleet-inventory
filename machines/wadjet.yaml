@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  storage: [type: VERIFY]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: none, ac_restore: VERIFY, recovery: "PHYSICAL power-on (no plug)"}
@@ -26,4 +26,4 @@ ops:
   provisioned: 2026-06-24
   last_verified: 2026-09-07
   upgrades: [{date: 2026-07-10, change: "RAPL PL1 75W->45W (cpu-powercap.service), PL2 90W unchanged"}]
-  known_issues: ["pg_role RELEASED 2026-07-18 (was streaming standby of Maat); to rejoin: recreate wadjet_slot on Maat + pg_basebackup."]
+  known_issues: ["pg_role RELEASED 2026-07-18 (was streaming standby of Maat); to rejoin: recreate wadjet_slot on Maat + pg_basebackup.", 'wq1580 last-attempt 2026-09-10: ssh/lscpu failed: ssh: connect to host 100.116.217.15 port 22: Connection timed out (confirmed via tailscale ping too — offline, last seen 53d, consistent with this file own status.power:off note; lumen_state wadjet.availability had drifted to "IDLE+available" on 2026-09-08 despite that — corrected same day, see wq#1620)']

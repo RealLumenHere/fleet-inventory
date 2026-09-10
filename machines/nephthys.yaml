@@ -12,7 +12,7 @@ network:
 hardware:
   cpu: {model: Xeon E5 v2 (Ivy Bridge-EP), cores: VERIFY, gen: v2}
   ram: {size_gb: VERIFY, type: DDR3-ECC}
-  storage: [{type: NVMe (proprietary)}]
+  storage: [type: NVMe (proprietary)]
   gpu: [{model: dual FirePro D300, vram_gb: 2}]
   board: {model: "Mac Pro 6,1", quirks: "afterg3 auto-boot enabled -> plug MUST stay OFF"}
   power_hw: {plug_id: P2, ac_restore: "auto-boot on -> keep plug OFF", recovery: "n/a (retired)"}
@@ -20,4 +20,4 @@ roles: []
 services: []
 serves: []
 governance: {crown_jewel: false, off_limits: false}
-ops: {maint_tier: 1.5, provisioned: 2026-06, last_verified: 2026-09-04, upgrades: [], known_issues: ["RETIRED — do not monitor/reach/report. Roles moved to Bes."]}
+ops: {maint_tier: 1.5, provisioned: 2026-06, last_verified: 2026-09-04, upgrades: [], known_issues: ["RETIRED — do not monitor/reach/report. Roles moved to Bes.", 'wq1580 last-attempt 2026-09-10: no ssh target configured']}

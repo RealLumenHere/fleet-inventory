@@ -13,9 +13,9 @@ network:
   ssh: {user: thoth, method: key, key: /home/lumen/.ssh/thoth_ed25519}
   nics: []
 hardware:
-  cpu: {model: Intel i3-1115G4, cores: 2, gen: Tiger Lake (11th gen)}
-  ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY}]
+  cpu: {model: Intel i3-1115G4, cores: 2, gen: 'Tiger Lake (11th gen) [avx512]'}
+  ram: {size_gb: 14, type: VERIFY}
+  storage: [type: sata]
   gpu: []
   board: {model: Seneca MP (same platform as seshat), bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: P10, ac_restore: VERIFY, recovery: "smart plug P10 power-cycle"}
@@ -23,4 +23,4 @@ roles: [media, torrent]
 services: [plex, torrent client]
 serves: [Plex / media library; candidate host for the Pico serprog rig (always-on, keeps Lumen untouched)]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
-ops: {maint_tier: 1, provisioned: 2026-04-25, last_verified: 2026-09-07, upgrades: [], known_issues: ["tailnet-OFFLINE since ~2026-09-02: LAN 192.168.8.218 pings (L3 up) but :22 does not answer — live example for DESIGN_SOT test (iv); Gatus alert must keep firing after regeneration."]}
+ops: {maint_tier: 1, provisioned: 2026-04-25, last_verified: 2026-09-10, upgrades: [], known_issues: ["tailnet-OFFLINE since ~2026-09-02: LAN 192.168.8.218 pings (L3 up) but :22 does not answer — live example for DESIGN_SOT test (iv); Gatus alert must keep firing after regeneration."]}
