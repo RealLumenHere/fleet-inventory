@@ -37,6 +37,7 @@ def _rec(name, status="active", monitor=True, ts="100.64.0.1", user=None, roles=
 @pytest.fixture
 def root(tmp_path, monkeypatch):
     monkeypatch.setenv("FLEET_INV_NO_AQ", "1")
+    monkeypatch.setenv("FLEET_INV_NO_STATE", "1")  # wq#1631: hermetic, never shells out to lumen_state
     monkeypatch.setenv("FLEET_INV_HOSTNAME", "hub")
     m = tmp_path / "machines"
     m.mkdir()
@@ -97,6 +98,16 @@ def test_plug_map_and_duplicate_detection(root):
         inv.plug_map(inv.load(root=root))
 
 
+def test_plug_map_prefers_live_state_over_yaml(root):
+    """wq#1631: a live power_plug fact overrides the declared hardware.power_hw.plug_id;
+    NO-FACT nodes keep resolving from the YAML exactly as before."""
+    r = inv.load(root=root)
+    live = {"leaf": {"power_plug": "P9 (since 2026-01-01)"}}
+    pm = inv.plug_map(r, state_fn=lambda name: live.get(name, {}))
+    assert pm["P9"] == "leaf" and "P6" not in pm  # leaf moved off its declared P6 in the store
+    assert pm["P11"] == "hub" and pm["P4"] == "vault"  # untouched nodes still resolve from YAML
+
+
 def test_validate_new_fields(root):
     (root / "machines" / "leaf.yaml").write_text(_rec("leaf", ts="100.64.0.3", tier="soon"))
     errs = inv.validate(root=root)
@@ -107,7 +118,8 @@ def test_validate_new_fields(root):
 
 
 def _cli(root, *args):
-    env = dict(os.environ, FLEET_INVENTORY_ROOT=str(root), FLEET_INV_NO_AQ="1", FLEET_INV_HOSTNAME="hub")
+    env = dict(os.environ, FLEET_INVENTORY_ROOT=str(root), FLEET_INV_NO_AQ="1",
+              FLEET_INV_NO_STATE="1", FLEET_INV_HOSTNAME="hub")
     p = subprocess.run([sys.executable, CLI, *args], capture_output=True, text=True, env=env)
     return p.returncode, p.stdout, p.stderr
 
@@ -204,7 +216,7 @@ def test_fleet_md_markers_and_legacy_conversion(root, tmp_path):
 
 
 def test_render_md_entrypoint(root):
-    env = dict(os.environ, FLEET_INVENTORY_ROOT=str(root), FLEET_INV_NO_AQ="1")
+    env = dict(os.environ, FLEET_INVENTORY_ROOT=str(root), FLEET_INV_NO_AQ="1", FLEET_INV_NO_STATE="1")
     p = subprocess.run([sys.executable, os.path.join(TOP, "render.py"), "--md"], capture_output=True, text=True, env=env)
     assert p.returncode == 0, p.stderr
     assert p.stdout.startswith(fleet_md.BEGIN) and "| hub |" in p.stdout

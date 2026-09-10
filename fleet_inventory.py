@@ -10,6 +10,8 @@ API
   by_role(role) / validate(records=None, root=None) -> [errors]
   select(**filters) / ssh_targets(**filters) / is_local(rec) / maint_tier(rec) / plug_map()
       (wq#1456: the ops scripts' NODES/HOSTS lists come from these — no script keeps names)
+  observed(name) -> live state_facts overrides {tailscale_ip, lan_ip, ssh_user, plug_id} (wq#1631:
+      ssh_target()/plug_map() read this first; {} keys are NO-FACT and fall back to declared YAML)
 
 Root resolution: explicit root= arg, else $FLEET_INVENTORY_ROOT, else this file's directory.
 $FLEET_INV_HOSTNAME overrides the local hostname used by is_local() (tests, cross-host runs).
@@ -28,7 +30,9 @@ sentinel_probes.py edge-clear from wq#548).
 import glob
 import json
 import os
+import re
 import socket
+import subprocess
 import sys
 import tempfile
 
@@ -41,6 +45,13 @@ PARSE_ERROR_MARKER = ".roster.parse_error"
 AQ_DIR = "/home/lumen/agents/alert-queue"
 AQ_SOURCE = "inventory"
 AQ_KEY = "inventory:parse-error"
+
+# wq#1631 (MINERVA_PIPELINE_MAP.md §4.2): state_facts owns tailscale_ip, lan_ip, ssh user,
+# and the power plug binding. This module is the one place that reads it for those keys —
+# consumers call observed(), never lumen_state.py directly. $LUMEN_STATE_PY overrides for tests.
+LUMEN_STATE = os.environ.get("LUMEN_STATE_PY", "/home/lumen/minerva/lumen_state.py")
+_FACT_RE = re.compile(r"^\s*([a-z0-9_-]+)\.([a-z0-9_]+)\s+=\s+(.*?)\s*(?:\(since [^)]*\))?\s*$", re.I)
+_IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 
 STATUS_ENUM = ("active", "standby", "bench", "in-storage", "decommissioned", "dead")
 UNMONITORED_STATUSES = frozenset({"decommissioned", "dead", "in-storage"})
@@ -387,18 +398,74 @@ def _clean(v):
     return None if v in (None, "", "VERIFY", "n/a") else str(v)
 
 
-def ssh_target(name, records=None, root=None):
-    """'user@tailscale_ip' for name. Raises InventoryError if unknown or unresolvable
-    (user/ip VERIFY, or network.ssh.method n/a = 'do not reach', e.g. a decommissioned box)."""
+def _state_facts(name):
+    """{predicate: value} for `name` from `lumen_state.py current`. Read-only; {} on any failure
+    or when FLEET_INV_NO_STATE is set (tests, offline) — a state-store outage must never break
+    an inventory read, only make it fall back to the declared YAML value."""
+    if os.environ.get("FLEET_INV_NO_STATE"):
+        return {}
+    try:
+        out = subprocess.run([sys.executable, LUMEN_STATE, "current", name],
+                             capture_output=True, text=True, timeout=30).stdout
+    except (OSError, subprocess.SubprocessError):
+        return {}
+    facts = {}
+    for line in out.splitlines():
+        m = _FACT_RE.match(line)
+        if m and m.group(1).lower() == name.lower():
+            facts[m.group(2).lower()] = m.group(3).strip()
+    return facts
+
+
+def observed(name, state_fn=None):
+    """Live-observed values for `name`, sourced from state_facts (wq#1631 ownership split):
+    tailscale_ip, lan_ip, ssh user, power plug. Only predicates confirmed to exist in the store
+    today — no hardware.ram/storage predicate exists yet, so those stay YAML-declared until one
+    is ingested. A key absent here is NO-FACT: callers fall back to the declared YAML value."""
+    facts = (state_fn or _state_facts)(name)
+    out = {}
+    ts = facts.get("tailscale_ip") or facts.get("ts_ip")
+    if ts:
+        m = _IP_RE.search(ts)
+        if m:
+            out["tailscale_ip"] = m.group(1)
+    lan = facts.get("lan_ip")
+    if lan:
+        m = _IP_RE.search(lan)
+        if m:
+            out["lan_ip"] = m.group(1)
+    user = facts.get("ssh_user")
+    if user:
+        m = re.match(r"[A-Za-z][A-Za-z0-9-]*", user)
+        if m:
+            out["ssh_user"] = m.group(0)
+    elif facts.get("ssh"):
+        m = re.match(r"\s*([A-Za-z][A-Za-z0-9-]*)@", facts["ssh"])
+        if m:
+            out["ssh_user"] = m.group(1)
+    plug = facts.get("power_plug")
+    if plug:
+        m = re.match(r"[A-Za-z]+\d+", plug)
+        if m:
+            out["plug_id"] = m.group(0)
+    return out
+
+
+def ssh_target(name, records=None, root=None, state_fn=None):
+    """'user@tailscale_ip' for name, resolved from the live store first (wq#1631: state_facts
+    owns observed network.*), falling back to the declared YAML network block on NO-FACT.
+    Raises InventoryError if unknown or unresolvable (user/ip VERIFY, or network.ssh.method
+    n/a = 'do not reach', e.g. a decommissioned box)."""
     rec = get(name, records, root)
     if rec is None:
         raise InventoryError(f"{name}: not in inventory")
     net = rec.get("network") or {}
     ssh = net.get("ssh") or {}
-    user = _clean(ssh.get("user"))
-    ip = _clean(net.get("tailscale_ip"))
     if str(ssh.get("method") or "").lower() in ("n/a", "none", "no"):
         raise InventoryError(f"{name}: ssh method {ssh.get('method')!r} — not reachable by design")
+    live = observed(name, state_fn)
+    user = live.get("ssh_user") or _clean(ssh.get("user"))
+    ip = live.get("tailscale_ip") or _clean(net.get("tailscale_ip"))
     if not user or not ip:
         raise InventoryError(f"{name}: no ssh target (user={user or 'VERIFY'}, tailscale_ip={ip or 'VERIFY'})")
     return f"{user}@{ip}"
@@ -502,15 +569,18 @@ def maintenance_targets(records=None, root=None, *, local="", skipped=None, host
                        **MAINTENANCE_FILTERS)
 
 
-def plug_map(records=None, root=None):
-    """{plug_id: name} from hardware.power_hw.plug_id (e.g. 'P3' -> 'hathor'). Ids VERIFY/none skipped.
-    Two machines claiming one plug is a data error: InventoryError."""
+def plug_map(records=None, root=None, state_fn=None):
+    """{plug_id: name} — live power_plug fact from state_facts first (wq#1631), falling back to
+    the declared hardware.power_hw.plug_id on NO-FACT (e.g. 'P3' -> 'hathor'). Ids VERIFY/none
+    skipped. Two machines claiming one plug is a data error: InventoryError."""
     out = {}
     for rec in all(records, root):
-        pid = _clean(((rec.get("hardware") or {}).get("power_hw") or {}).get("plug_id"))
+        name = rec["identity"]["name"]
+        live = observed(name, state_fn)
+        pid = live.get("plug_id") or _clean(((rec.get("hardware") or {}).get("power_hw") or {}).get("plug_id"))
         if not pid or pid.lower() == "none":
             continue
         if pid in out:
-            raise InventoryError(f"plug {pid} claimed by both {out[pid]} and {rec['identity']['name']}")
-        out[pid] = rec["identity"]["name"]
+            raise InventoryError(f"plug {pid} claimed by both {out[pid]} and {name}")
+        out[pid] = name
     return out

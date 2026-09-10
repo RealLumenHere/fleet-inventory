@@ -23,7 +23,13 @@ CONFIG_DUPLICATION: the same fact (is X a fleet node, is it monitored) copied by
 Fix the class: ONE loader, consumers import it, no consumer keeps a name list. A decommission is one YAML edit.
 
 ## Decisions
-- TRUTH = machines/<name>.yaml. lumen_state may cache-derive; never contradict. FLEET_MAP roster table becomes derived (T4).
+- TRUTH split (wq#1631, MINERVA_PIPELINE_MAP.md §4.2 — supersedes the original "TRUTH =
+  machines/<name>.yaml" line below, kept only for the CONFIG_DUPLICATION history above): the
+  YAML declares governance, maint_tier, monitoring policy, roles, ops.known_issues. state_facts
+  owns network.tailscale_ip/lan_ip/ssh.user and the power plug binding — fleet_inventory.py
+  reads them live (observed()); the YAML value is a fallback for NO-FACT, never the authority.
+  `fleet-inv drift` audits the declared YAML against the store instead of claiming YAML wins.
+  FLEET_MAP roster table becomes derived (T4).
 - Schema additions (SCHEMA.md): under `status:` add optional
     monitoring: {interval_s: 60, alert: true, alert_desc: "", gatus: true}
   defaults shown. `gatus:false` = keep in roster but no Gatus ICMP row (lumen self-ping is meaningless).
@@ -32,7 +38,7 @@ Fix the class: ONE loader, consumers import it, no consumer keeps a name list. A
 - Loader: /home/lumen/fleet/inventory/fleet_inventory.py (pyyaml only). API: load(strict) / all() / monitored()
   / is_monitored(name) / get(name) / ssh_target(name)->user@ts_ip / by_role(role) / validate().
   CLI /home/lumen/bin/fleet-inv (lumen-bin repo, PR): list [--monitored] [--json], get <name> [dotted.key],
-  ssh-list, check, drift (compare tailscale_ip/lan_ip vs lumen_state, report only).
+  ssh-list, check, drift (declared YAML vs state_facts: network/ssh/plug + lifecycle, report only).
 - LAST-GOOD: every successful strict load writes .roster.last_good.json (atomic). load(fallback=True) returns
   the cache on parse error, prints ERROR to stderr and raises an aq alert key inventory:parse-error (edge-
   triggered, resolves on next clean load). Consumers use fallback=True: a typo neither blanks monitoring

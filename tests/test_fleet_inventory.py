@@ -36,6 +36,7 @@ ops: {{known_issues: []}}
 @pytest.fixture
 def root(tmp_path, monkeypatch):
     monkeypatch.setenv("FLEET_INV_NO_AQ", "1")
+    monkeypatch.setenv("FLEET_INV_NO_STATE", "1")  # wq#1631: hermetic, never shells out to lumen_state
     m = tmp_path / "machines"
     m.mkdir()
     (m / "alpha.yaml").write_text(_yaml("alpha", "active", True, ts="100.64.0.10", user="alpha"))
@@ -195,6 +196,20 @@ def test_aq_edge_trigger_opens_once_and_clears_on_clean_load(root, monkeypatch):
     assert not (root / inv.PARSE_ERROR_MARKER).exists()
     inv.load(root=root)
     assert calls["resolved"] == 1                    # no repeat clear without a new edge
+
+
+def test_observed_reads_state_facts_over_yaml(root):
+    """wq#1631: observed() only trusts predicates it can parse; NO-FACT keys are simply absent
+    so callers fall back to the declared YAML value."""
+    r = inv.load(root=root)
+    fake = {"tailscale_ip": "100.99.0.1 (since 2026-01-01)", "ssh_user": "opsuser",
+            "power_plug": "P7 — definitively (since 2026-01-01)"}
+    live = inv.observed("alpha", state_fn=lambda name: fake if name == "alpha" else {})
+    assert live == {"tailscale_ip": "100.99.0.1", "ssh_user": "opsuser", "plug_id": "P7"}
+    assert inv.observed("bravo", state_fn=lambda name: {}) == {}
+    # ssh_target prefers the live value; NO-FACT (empty state_fn) falls back to the YAML network block
+    assert inv.ssh_target("alpha", r, state_fn=lambda name: fake) == "opsuser@100.99.0.1"
+    assert inv.ssh_target("alpha", r, state_fn=lambda name: {}) == "alpha@100.64.0.10"
 
 
 def test_real_inventory_is_valid():

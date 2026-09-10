@@ -7,15 +7,23 @@
                      [--self TEXT] [--order name|maint] [--fields f,g,...]
   fleet-inv plugs        # plug_id<TAB>name<TAB>power — hardware.power_hw.plug_id per machine
   fleet-inv check
-  fleet-inv drift        # inventory vs lumen_state — REPORT ONLY, never writes state
+  fleet-inv drift        # schema check + declared-vs-store lifecycle check — REPORT ONLY, never writes state
 
 ssh-list is the roster feed for the ops scripts (wq#1456): fleet-keymesh, fleet-roll-reboot,
 rotate-fleet-pw read it instead of carrying a NODES list. Default = MONITORED() machines with a
 resolvable user@tailscale_ip; unresolvable ones are reported on stderr, never silently dropped.
 Root: $FLEET_INVENTORY_ROOT overrides the machines/ dir (tests); default = this checkout.
-$LUMEN_STATE_PY overrides the state-store CLI `drift` reads (tests); default = the real one.
+$LUMEN_STATE_PY overrides the state-store CLI fleet_inventory.py reads (tests); default = the real one.
 
-`drift` also reports coverage (wq#1611): 0 DRIFT over 34 fields nobody could compare is not
+Ownership split (wq#1631, MINERVA_PIPELINE_MAP.md §4.2): machines/*.yaml declares governance,
+maint_tier, monitoring policy, roles, ops.known_issues. network.tailscale_ip/lan_ip/ssh.user and
+the power plug binding are OBSERVED — fleet_inventory.py reads them live from state_facts
+(fleet_inventory.observed(), the one place this repo talks to lumen_state.py); the YAML value is
+a declared fallback for when the store has no fact yet, never the authority. `drift` audits the
+declared YAML against the store and flags a stale declared status.status the store contradicts
+(e.g. YAML says active, the store carries an OFFLINE/DEAD signal ops.known_issues never mentions).
+
+`drift` also reports coverage (wq#1611): 0 DRIFT over N fields nobody could compare is not
 success. NO-FACT is ratcheted against a baseline file — it may fall, never grow silently.
 
 Exit codes: 0 ok · 1 error/invalid · 2 drift found (drift) or name/key missing (get)
@@ -25,16 +33,12 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 import fleet_inventory as inv  # noqa: E402
 
-LUMEN_STATE = os.environ.get("LUMEN_STATE_PY", "/home/lumen/minerva/lumen_state.py")
 BASELINE_NAME = ".drift.coverage_baseline.json"
-IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
-FACT_RE = re.compile(r"^\s*([a-z0-9_-]+)\.([a-z0-9_]+)\s+=\s+(.*?)\s*(?:\(since [^)]*\))?\s*$", re.I)
 
 
 def _roster(args):
@@ -100,13 +104,14 @@ SSH_FIELDS = ("name", "target", "user", "host", "tailscale_ip", "lan_ip", "ssh_k
 
 def _ssh_row(name, target, rec, self_marker):
     net, st = rec.get("network") or {}, rec.get("status") or {}
+    live = inv.observed(name)
     user, _, host = target.partition("@") if "@" in target else ("", "", target)
     if target == self_marker:
-        user = str((net.get("ssh") or {}).get("user") or "-")
+        user = live.get("ssh_user") or str((net.get("ssh") or {}).get("user") or "-")
     tier = inv.maint_tier(rec)
     return {"name": name, "target": target, "user": user or "-", "host": host or "-",
-            "tailscale_ip": inv._clean(net.get("tailscale_ip")) or "-",
-            "lan_ip": inv._clean(net.get("lan_ip")) or "-",
+            "tailscale_ip": live.get("tailscale_ip") or inv._clean(net.get("tailscale_ip")) or "-",
+            "lan_ip": live.get("lan_ip") or inv._clean(net.get("lan_ip")) or "-",
             "ssh_key": inv.ssh_key(rec, "-"), "status": st.get("status", "?"),
             "monitored": "yes" if inv._is_monitored_rec(rec) else "no",
             "maint_tier": ("%g" % tier) if tier < 6 else "-"}
@@ -165,46 +170,6 @@ def cmd_check(args):
     print(f"OK: {len(r)} machines valid, {len(inv.monitored(r))} monitored; "
           f"last-good written to {inv._last_good_path(None)}")
     return 0
-
-
-def _state_facts(node):
-    """Parse `lumen_state.py current <node>` into {predicate: value}. Read-only."""
-    try:
-        out = subprocess.run([sys.executable, LUMEN_STATE, "current", node],
-                             capture_output=True, text=True, timeout=30).stdout
-    except (OSError, subprocess.SubprocessError) as e:
-        print(f"# lumen_state unavailable for {node}: {e}", file=sys.stderr)
-        return {}
-    facts = {}
-    for line in out.splitlines():
-        m = FACT_RE.match(line)
-        if m and m.group(1).lower() == node.lower():
-            facts[m.group(2).lower()] = m.group(3).strip()
-    return facts
-
-
-def _state_ip(facts, *preds):
-    for p in preds:
-        v = facts.get(p)
-        if v:
-            m = IP_RE.search(v)
-            if m:
-                return m.group(1)
-    return None
-
-
-def _state_user(facts):
-    v = facts.get("ssh_user")
-    if v:
-        m = re.match(r"[A-Za-z][A-Za-z0-9-]*", v)
-        if m:
-            return m.group(0)
-    v = facts.get("ssh")
-    if v:
-        m = re.match(r"\s*([A-Za-z][A-Za-z0-9-]*)@", v)
-        if m:
-            return m.group(1)
-    return None
 
 
 class Coverage:
@@ -283,18 +248,26 @@ def _coverage_gate(args, cov):
     return False
 
 
+# wq#1631: a declared status.status=active the store contradicts with no ops.known_issues
+# acknowledgment is the lifecycle drift case (thoth: YAML active, store tailnet-OFFLINE since
+# 09-02, known_issues DOES mention it -> MATCH, not DRIFT — the declared record is caught up).
+_TROUBLE_WORDS = ("OFFLINE", "DEAD", "DECOMMISSIONED", "UNREACHABLE")
+_ACK_WORDS = ("offline", "dead", "decommission", "unreachable")
+
+
 def cmd_drift(args):
     r = _roster(args)
     rows, drift = [], 0
     cov = Coverage("fleet-inv:inventory-vs-state")
     for rec in inv.all(r):
         name = rec["identity"]["name"]
-        net = rec.get("network") or {}
-        facts = _state_facts(name)
+        net, st = rec.get("network") or {}, rec.get("status") or {}
+        facts = inv._state_facts(name)
+        live = inv.observed(name, state_fn=lambda _n, f=facts: f)
         pairs = (
-            ("tailscale_ip", inv._clean(net.get("tailscale_ip")), _state_ip(facts, "tailscale_ip", "ts_ip")),
-            ("lan_ip", inv._clean(net.get("lan_ip")), _state_ip(facts, "lan_ip")),
-            ("ssh.user", inv._clean((net.get("ssh") or {}).get("user")), _state_user(facts)),
+            ("tailscale_ip", inv._clean(net.get("tailscale_ip")), live.get("tailscale_ip")),
+            ("lan_ip", inv._clean(net.get("lan_ip")), live.get("lan_ip")),
+            ("ssh.user", inv._clean((net.get("ssh") or {}).get("user")), live.get("ssh_user")),
         )
         for field, mine, theirs in pairs:
             if theirs is None:
@@ -311,12 +284,32 @@ def cmd_drift(args):
                 cov.count("drifted")
             if verdict != "MATCH" or args.verbose:
                 rows.append((name, field, mine or "VERIFY", theirs or "-", verdict))
+        # declared-vs-store lifecycle check (schema check itself is `fleet-inv check`, separate).
+        live_status = (facts.get("status") or "").strip()
+        known = " ".join((rec.get("ops") or {}).get("known_issues") or []).lower()
+        if not live_status:
+            verdict = "NO-FACT"
+            cov.count("unverifiable", "no-fact")
+        else:
+            trouble = any(w in live_status.upper() for w in _TROUBLE_WORDS)
+            acked = any(w in known for w in _ACK_WORDS)
+            if trouble and st.get("status") == "active" and not acked:
+                verdict, drift = "DRIFT", drift + 1
+                cov.count("drifted")
+            else:
+                verdict = "MATCH"
+                cov.count("matched")
+        if verdict != "MATCH" or args.verbose:
+            shown = live_status[:60] + "…" if len(live_status) > 60 else (live_status or "-")
+            rows.append((name, "lifecycle", st.get("status", "?"), shown, verdict))
     hdr = ("NODE", "FIELD", "INVENTORY", "LUMEN_STATE", "VERDICT")
     widths = [max(len(str(x[i])) for x in rows + [hdr]) for i in range(len(hdr))]
     for row in [hdr] + rows:
         print("  ".join(str(c).ljust(widths[i]) for i, c in enumerate(row)).rstrip())
     print(f"drift: {drift} disagreement(s) across {len(r)} machines "
-          f"(report only; inventory YAML is truth — fix the YAML or ingest a newer fact)")
+          f"(report only; state_facts is authoritative for network.*/ssh.user/power plug and "
+          f"declared status.status vs store lifecycle — fix by ingesting a fact or updating "
+          f"ops.known_issues, never by hand-editing the observed keys)")
     print(cov.line())
     regressed = _coverage_gate(args, cov)
     if drift:
@@ -355,7 +348,7 @@ def main(argv=None):
     p.set_defaults(fn=cmd_plugs)
     p = sub.add_parser("check", help="validate every machines/*.yaml; refresh last-good on success")
     p.set_defaults(fn=cmd_check)
-    p = sub.add_parser("drift", help="compare tailscale_ip/lan_ip/ssh user vs lumen_state (report only)")
+    p = sub.add_parser("drift", help="declared YAML vs state_facts: network/ssh/plug fields + lifecycle (report only)")
     p.add_argument("-v", "--verbose", action="store_true", help="also print MATCH rows")
     p.add_argument("--baseline", metavar="PATH", help=f"NO-FACT ratchet file (default {BASELINE_NAME} in the root)")
     p.add_argument("--no-baseline", action="store_true", help="report coverage but do not gate on it")

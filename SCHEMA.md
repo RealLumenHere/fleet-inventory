@@ -1,7 +1,12 @@
 # Fleet inventory — schema (one YAML per machine in machines/<name>.yaml)
 
-Single source of truth for every machine. Humans edit the YAML; agents/orchestrator/
-worker/judge/supervisor/doctor/broker READ it (never guess node facts elsewhere).
+Source of truth for DECLARED machine config: governance, maint_tier, monitoring policy, roles,
+ops.known_issues. Humans edit the YAML for these; agents/orchestrator/worker/judge/supervisor/
+doctor/broker READ it (never guess node facts elsewhere). network.tailscale_ip/lan_ip/ssh.user
+and hardware.power_hw.plug_id are OBSERVED instead — state_facts is their authority, and
+fleet_inventory.py reads them live (observed()); the YAML value there is a fallback for when
+the store has no fact yet, not the truth (wq#1631, MINERVA_PIPELINE_MAP.md §4.2). `fleet-inv
+drift` audits the declared YAML against the store.
 Grounded in NetBox's device + inventory-item model.
 
 ## identity
@@ -27,7 +32,7 @@ Grounded in NetBox's device + inventory-item model.
   lists of their own — they call fleet_inventory.monitored()/is_monitored()). Loader: fleet_inventory.py;
   CLI: fleet-inv. Files under machines/ whose name starts with "_" are ignored.
 
-## network
+## network  (OBSERVED — state_facts is authoritative; the YAML value is a NO-FACT fallback, wq#1631)
   tailscale_ip:    100.x
   lan_ip:          192.168.x
   ssh:             {user, method, key} # method: key / ts-ssh check-mode / LAN-only / n/a (= do not reach)
@@ -70,6 +75,7 @@ Grounded in NetBox's device + inventory-item model.
                                        # fleet-maint-assemble / fleet-maint-run build NODE_ORDER from this.
                                        # governance.never_restart (Thor) excludes a node from maintenance entirely.
 
-## hardware.power_hw.plug_id
-  The smart-plug id (P1..P14, E1) a box sits on. `fleet-inv plugs` feeds plug-ctl's labels from it —
-  move a box to another plug = edit the YAML. VERIFY/none = no plug known.
+## hardware.power_hw.plug_id  (OBSERVED — state_facts `<node>.power_plug` is authoritative, wq#1631)
+  The smart-plug id (P1..P14, E1) a box sits on. `fleet-inv plugs` feeds plug-ctl's labels from
+  fleet_inventory.observed() first, falling back to this YAML value on NO-FACT. VERIFY/none = no
+  plug known to either store.
