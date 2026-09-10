@@ -3,6 +3,7 @@ www/
 .roster.last_good.json
 .roster.parse_error
 .roster.*.tmp
+.drift.coverage_baseline.json
 .scratch_*
 .pytest_cache/
 __pycache__/

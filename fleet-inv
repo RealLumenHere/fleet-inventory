@@ -13,8 +13,13 @@ ssh-list is the roster feed for the ops scripts (wq#1456): fleet-keymesh, fleet-
 rotate-fleet-pw read it instead of carrying a NODES list. Default = MONITORED() machines with a
 resolvable user@tailscale_ip; unresolvable ones are reported on stderr, never silently dropped.
 Root: $FLEET_INVENTORY_ROOT overrides the machines/ dir (tests); default = this checkout.
+$LUMEN_STATE_PY overrides the state-store CLI `drift` reads (tests); default = the real one.
 
-Exit codes: 0 ok · 1 error/invalid · 2 drift found (drift) or name/key missing (get).
+`drift` also reports coverage (wq#1611): 0 DRIFT over 34 fields nobody could compare is not
+success. NO-FACT is ratcheted against a baseline file — it may fall, never grow silently.
+
+Exit codes: 0 ok · 1 error/invalid · 2 drift found (drift) or name/key missing (get)
+            · 3 coverage regressed: NO-FACT grew past the baseline (drift).
 """
 import argparse
 import json
@@ -26,7 +31,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 import fleet_inventory as inv  # noqa: E402
 
-LUMEN_STATE = "/home/lumen/minerva/lumen_state.py"
+LUMEN_STATE = os.environ.get("LUMEN_STATE_PY", "/home/lumen/minerva/lumen_state.py")
+BASELINE_NAME = ".drift.coverage_baseline.json"
 IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 FACT_RE = re.compile(r"^\s*([a-z0-9_-]+)\.([a-z0-9_]+)\s+=\s+(.*?)\s*(?:\(since [^)]*\))?\s*$", re.I)
 
@@ -201,9 +207,86 @@ def _state_user(facts):
     return None
 
 
+class Coverage:
+    """checked/matched/drifted/unverifiable for one audit run.
+
+    Cross-repo contract with /home/lumen/minerva/lumen_coverage.py (wq#1611):
+    the rendered line must stay byte-identical in shape. Change one, change both.
+    """
+
+    def __init__(self, scope):
+        self.scope, self.checked, self.matched, self.drifted, self.unverifiable = scope, 0, 0, 0, 0
+        self.detail = {}
+
+    def count(self, verdict, reason=None):
+        self.checked += 1
+        setattr(self, verdict, getattr(self, verdict) + 1)
+        if reason:
+            self.detail[reason] = self.detail.get(reason, 0) + 1
+
+    def line(self):
+        s = (f"coverage[{self.scope}]: checked {self.checked} · matched {self.matched}"
+             f" · drifted {self.drifted} · unverifiable {self.unverifiable}")
+        if self.detail:
+            s += " (" + ", ".join(f"{k} {self.detail[k]}" for k in sorted(self.detail)) + ")"
+        return s
+
+    def as_dict(self):
+        return {"scope": self.scope, "checked": self.checked, "matched": self.matched,
+                "drifted": self.drifted, "unverifiable": self.unverifiable,
+                "detail": dict(self.detail)}
+
+
+def _baseline_path(args):
+    return args.baseline or os.path.join(inv._root(None), BASELINE_NAME)
+
+
+def _read_baseline(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def _write_baseline(path, cov):
+    try:
+        with open(path, "w") as f:
+            json.dump(cov.as_dict(), f, indent=2, sort_keys=True)
+    except OSError as e:
+        print(f"# could not write coverage baseline {path}: {e}", file=sys.stderr)
+
+
+def _coverage_gate(args, cov):
+    """Ratchet NO-FACT against the baseline. Returns True if coverage regressed.
+
+    The baseline falls freely and rises only with --accept-baseline: closing a gap
+    locks it in, opening one keeps failing until somebody looks at it.
+    """
+    if args.no_baseline:
+        return False
+    path = _baseline_path(args)
+    prev = _read_baseline(path)
+    now = cov.detail.get("no-fact", 0)
+    if prev is None:
+        _write_baseline(path, cov)
+        print(f"coverage: no baseline yet — recorded no-fact {now} at {path}")
+        return False
+    was = (prev.get("detail") or {}).get("no-fact", 0)
+    if now > was and not args.accept_baseline:
+        print(f"coverage: NO-FACT grew {was} -> {now} — {now - was} inventory field(s) newly "
+              f"have no counterpart in lumen_state. Ingest them or run with --accept-baseline.")
+        return True
+    if now != was:
+        print(f"coverage: NO-FACT {was} -> {now} — baseline updated at {path}")
+    _write_baseline(path, cov)
+    return False
+
+
 def cmd_drift(args):
     r = _roster(args)
     rows, drift = [], 0
+    cov = Coverage("fleet-inv:inventory-vs-state")
     for rec in inv.all(r):
         name = rec["identity"]["name"]
         net = rec.get("network") or {}
@@ -216,12 +299,16 @@ def cmd_drift(args):
         for field, mine, theirs in pairs:
             if theirs is None:
                 verdict = "NO-FACT"
+                cov.count("unverifiable", "no-fact")
             elif mine is None:
                 verdict = "UNVERIFIED"
+                cov.count("unverifiable", "no-inventory")
             elif mine == theirs:
                 verdict = "MATCH"
+                cov.count("matched")
             else:
                 verdict, drift = "DRIFT", drift + 1
+                cov.count("drifted")
             if verdict != "MATCH" or args.verbose:
                 rows.append((name, field, mine or "VERIFY", theirs or "-", verdict))
     hdr = ("NODE", "FIELD", "INVENTORY", "LUMEN_STATE", "VERDICT")
@@ -230,7 +317,11 @@ def cmd_drift(args):
         print("  ".join(str(c).ljust(widths[i]) for i, c in enumerate(row)).rstrip())
     print(f"drift: {drift} disagreement(s) across {len(r)} machines "
           f"(report only; inventory YAML is truth — fix the YAML or ingest a newer fact)")
-    return 2 if drift else 0
+    print(cov.line())
+    regressed = _coverage_gate(args, cov)
+    if drift:
+        return 2
+    return 3 if regressed else 0
 
 
 def main(argv=None):
@@ -266,6 +357,10 @@ def main(argv=None):
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("drift", help="compare tailscale_ip/lan_ip/ssh user vs lumen_state (report only)")
     p.add_argument("-v", "--verbose", action="store_true", help="also print MATCH rows")
+    p.add_argument("--baseline", metavar="PATH", help=f"NO-FACT ratchet file (default {BASELINE_NAME} in the root)")
+    p.add_argument("--no-baseline", action="store_true", help="report coverage but do not gate on it")
+    p.add_argument("--accept-baseline", action="store_true",
+                   help="record today's NO-FACT as the new baseline even if it grew")
     p.set_defaults(fn=cmd_drift)
     args = ap.parse_args(argv)
     return args.fn(args)
