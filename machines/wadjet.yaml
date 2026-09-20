@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current wadjet + sentinel Gatus 1-nodes block (config.yaml, DISABLED 2026-07-18 entry)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: wadjet, aliases: [], make_model: "VERIFY (prose only: Apple Mac Pro 6,1, GPU-B absent, RAPL PL1 45W — no structured fact in any store; read at next power-on)", serial: VERIFY, location: shelf}
+identity: {name: wadjet, aliases: [], make_model: "VERIFY (prose only: Apple Mac Pro 6,1, GPU-B absent, RAPL PL1 45W — no structured fact in any store; read at next power-on)", serial: VERIFY, location: shelf, tailnet: {hostname: wadjet, tags: [tag:lumen-fleet]}}
 status:
   status: standby
   power: off             # powered off, tailnet-offline 25d+; no smart plug (P12 removed 2026-07-16)
@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [type: VERIFY]
+  storage: [{type: VERIFY, serial: VERIFY}]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: none, ac_restore: VERIFY, recovery: "PHYSICAL power-on (no plug)"}

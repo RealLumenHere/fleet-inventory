@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current toilet (toilet.lan_ip / toilet.tailscale_ip / toilet.status online, all since 2026-06-17)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the device
-identity: {name: toilet, aliases: [toilet-940X5N], make_model: VERIFY, serial: VERIFY, location: "Frederick MD (lumen_state toilet.location, unverified since 2026-01-01)"}
+identity: {name: toilet, aliases: [toilet-940X5N], make_model: VERIFY, serial: VERIFY, location: "Frederick MD (lumen_state toilet.location, unverified since 2026-01-01)", tailnet: {hostname: toilet-940X5N, tags: []}}
 status:
   status: active
   power: on
@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [type: VERIFY]
+  storage: [{type: VERIFY, serial: VERIFY}]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: VERIFY}

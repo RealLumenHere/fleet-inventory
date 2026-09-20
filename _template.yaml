@@ -1,6 +1,6 @@
 # TEMPLATE — copy to machines/<name>.yaml and replace every VERIFY. Files starting with "_"
 # are ignored by the loader. Keep the 2-line provenance comment (seeded-from + date) on real files.
-identity: {name: VERIFY, aliases: [], make_model: VERIFY, serial: VERIFY, location: VERIFY}
+identity: {name: VERIFY, aliases: [], make_model: VERIFY, serial: VERIFY, location: VERIFY, tailnet: {hostname: VERIFY, tags: []}}
 status:
   status: VERIFY              # active | standby | bench | in-storage | decommissioned | dead
   power: VERIFY               # on | off | plug-cut

@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: thoth, aliases: [seneca], make_model: "Seneca PRO986222 mini PC", serial: "2581111", location: rack}
+identity: {name: thoth, aliases: [seneca], make_model: "Seneca PRO986222 mini PC", serial: "2581111", location: rack, tailnet: {hostname: thoth, tags: []}}
 status:
   status: active
   power: on

@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current apis (apis.status DEAD 2026-08-13)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: apis, aliases: [], make_model: VERIFY, serial: VERIFY, location: bench}
+identity: {name: apis, aliases: [], make_model: VERIFY, serial: VERIFY, location: bench, tailnet: {hostname: apis, tags: []}}
 status:
   status: dead
   power: off
@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [{type: VERIFY, interface: "2.5in SATA (migration path for replacement)"}]
+  storage: [{type: VERIFY, interface: "2.5in SATA (migration path for replacement)", serial: VERIFY}]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: "will not POST"}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: VERIFY, ac_restore: VERIFY, recovery: "n/a (dead; replacement hardware planned)"}

@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: isis, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: F5KQT0GKF9VM, location: rack}
+identity: {name: isis, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: F5KQT0GKF9VM, location: rack, tailnet: {hostname: isis, tags: []}}
 status:
   status: active
   power: on

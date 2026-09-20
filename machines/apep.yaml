@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current apep + sentinel Gatus 1-nodes block (config.yaml) + fleet-auth-ssh-probe NODES
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: apep, aliases: [], make_model: "Whitebox Apollo Lake mini-PC (AMI board 'Apollolake', no OEM branding)", serial: VERIFY, location: bench}
+identity: {name: apep, aliases: [], make_model: "Whitebox Apollo Lake mini-PC (AMI board 'Apollolake', no OEM branding)", serial: VERIFY, location: bench, tailnet: {hostname: apep, tags: []}}
 status:
   status: active
   power: on

@@ -1,5 +1,5 @@
 # seeded-from: lumen_state + operator quick-ref (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: thor, aliases: ["Samsung", "the reinstalled Samsung"], make_model: "Samsung Galaxy Book Pro 360 13 (NP930QDB-KE4US)", serial: 5BSC9FFT200313H, location: bench}
+identity: {name: thor, aliases: ["Samsung", "the reinstalled Samsung"], make_model: "Samsung Galaxy Book Pro 360 13 (NP930QDB-KE4US)", serial: 5BSC9FFT200313H, location: bench, tailnet: {hostname: thor, tags: []}}
 status:
   status: active
   power: on

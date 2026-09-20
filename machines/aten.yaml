@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current aten (aten.hardware / aten.status PROVISIONING 2026-07-21 / aten.role)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: aten, aliases: [], make_model: "Lenovo Yoga 730-13IKB (laptop)", serial: VERIFY, location: bench}
+identity: {name: aten, aliases: [], make_model: "Lenovo Yoga 730-13IKB (laptop)", serial: VERIFY, location: bench, tailnet: {hostname: aten, tags: []}}
 status:
   status: bench
   power: VERIFY
@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: Intel i5-8250U, cores: 4, gen: Kaby Lake R (8th gen)}
   ram: {size_gb: 8, type: DDR4 (soldered), ceiling_gb: 8}
-  storage: [{type: NVMe, size: 256GB, model: Samsung PM981, interface: "M.2 (replaceable)"}]
+  storage: [{type: NVMe, size: 256GB, model: Samsung PM981, interface: "M.2 (replaceable)", serial: VERIFY}]
   gpu: [{model: UHD 620 (integrated), vram_gb: 0}]
   board: {model: Yoga 730-13IKB, bios: "7LCN30WW v1.11", quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: none, ac_restore: n/a, recovery: "PHYSICAL (laptop)"}

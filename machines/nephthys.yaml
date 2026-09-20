@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware filled from lumen_state nephthys.* (live reads 2026-06-28 / 2026-07-15) by wq#1666 — box decommissioned, not re-read
-identity: {name: nephthys, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: VERIFY, location: storage}
+identity: {name: nephthys, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: VERIFY, location: storage, tailnet: {hostname: nephthys, tags: [tag:lumen-fleet]}}
 status:
   status: decommissioned
   power: plug-cut

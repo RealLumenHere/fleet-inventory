@@ -1,5 +1,5 @@
 # seeded-from: lumen_state + operator quick-ref (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: maat, aliases: ["Ma'at"], make_model: "WeiBu ADL-N mini-PC (N100)", serial: WBGMN9E0242800020, location: rack}
+identity: {name: maat, aliases: ["Ma'at"], make_model: "WeiBu ADL-N mini-PC (N100)", serial: WBGMN9E0242800020, location: rack, tailnet: {hostname: maat, tags: []}}
 status:
   status: active
   power: on

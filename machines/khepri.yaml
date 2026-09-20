@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware filled from lumen_state khepri.hw (live dmidecode 2026-08-14, wq#597) by wq#1666 — box offline, not re-read
-identity: {name: khepri, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: VERIFY, location: bench}
+identity: {name: khepri, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: VERIFY, location: bench, tailnet: {hostname: khepri, tags: [tag:lumen-fleet]}}
 status:
   status: bench
   power: off             # tailnet OFFLINE since 2026-08-15 (last seen), ssh timeout 2026-09-10; Frank powers it on/off

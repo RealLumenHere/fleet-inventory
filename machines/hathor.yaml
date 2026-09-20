@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: hathor, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: F5KR806KF9VN, location: rack}
+identity: {name: hathor, aliases: [], make_model: "Apple Mac Pro 6,1 (trashcan)", serial: F5KR806KF9VN, location: rack, tailnet: {hostname: hathor, tags: []}}
 status:
   status: active
   power: on              # HEALTHY 2026-09-08: up 1w+, I/O board replaced by Frank + tested clean; do not bench. Live 2026-09-10: up 9d

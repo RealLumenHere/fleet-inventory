@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: sobek, aliases: [], make_model: "Trigkey Green G4 (N100 mini-PC, unit-2)", serial: BN1003LH12393, location: rack}
+identity: {name: sobek, aliases: [], make_model: "Trigkey Green G4 (N100 mini-PC, unit-2)", serial: BN1003LH12393, location: rack, tailnet: {hostname: sobek, tags: [tag:lumen-fleet]}}
 status:
   status: active
   power: on

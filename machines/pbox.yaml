@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current pbox (pbox.status DECOMMISSIONED 2026-08-28, Frank; pbox.tailscale_ip)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: pbox, aliases: [], make_model: VERIFY (Win11 gaming box), serial: VERIFY, location: storage}
+identity: {name: pbox, aliases: [], make_model: VERIFY (Win11 gaming box), serial: VERIFY, location: storage, tailnet: {hostname: pbox, tags: []}}
 status:
   status: decommissioned
   power: on              # tailnet device PBox last seen 2026-09-10 — powered and online, just NOT fleet (Frank's gaming box)
@@ -14,7 +14,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [type: VERIFY]
+  storage: [{type: VERIFY, serial: VERIFY}]
   gpu: [{model: VERIFY, vram_gb: VERIFY}]
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: none, ac_restore: n/a, recovery: "n/a (retired)"}

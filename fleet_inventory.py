@@ -52,12 +52,16 @@ AQ_KEY = "inventory:parse-error"
 LUMEN_STATE = os.environ.get("LUMEN_STATE_PY", "/home/lumen/minerva/lumen_state.py")
 _FACT_RE = re.compile(r"^\s*([a-z0-9_-]+)\.([a-z0-9_]+)\s+=\s+(.*?)\s*(?:\(since [^)]*\))?\s*$", re.I)
 _IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
+_TAG_RE = re.compile(r"^tag:[A-Za-z0-9][A-Za-z0-9_-]*$")
+_TAG_FIND_RE = re.compile(r"tag:[A-Za-z0-9][A-Za-z0-9_-]*")
+_FACT_TAIL_RE = re.compile(r"\s*(?:\(since [^)]*\)|\[[^\]]*\]).*$")
 
 STATUS_ENUM = ("active", "standby", "bench", "in-storage", "decommissioned", "dead")
 UNMONITORED_STATUSES = frozenset({"decommissioned", "dead", "in-storage"})
 POWER_ENUM = ("on", "off", "plug-cut")
 TOP_LEVEL_KEYS = frozenset({"identity", "status", "network", "hardware", "software", "roles",
                             "services", "serves", "governance", "ops"})
+TAILNET_KEYS = frozenset({"hostname", "tags"})
 MONITORING_DEFAULTS = {"interval_s": 60, "alert": True, "alert_desc": "", "gatus": True}
 
 _CACHE = {"sig": None, "records": None}
@@ -94,6 +98,52 @@ def _err(file, line, msg):
     return f"{file}:{line}: {msg}"
 
 
+def _validate_tailnet(file, tn):
+    """identity.tailnet {hostname, tags} — optional; when present both keys are checked (wq#1692)."""
+    if tn is None:
+        return []
+    if not isinstance(tn, dict):
+        return [_err(file, 1, "identity.tailnet must be a mapping {hostname, tags}")]
+    errs = []
+    bad = set(tn) - TAILNET_KEYS
+    if bad:
+        errs.append(_err(file, 1, f"identity.tailnet unknown keys: {sorted(bad)}"))
+    host = tn.get("hostname")
+    if host is not None and (not isinstance(host, str) or not host.strip()):
+        errs.append(_err(file, 1, f"identity.tailnet.hostname must be a non-empty string, got {host!r}"))
+    tags = tn.get("tags")
+    if tags is not None:
+        if not isinstance(tags, list):
+            errs.append(_err(file, 1, "identity.tailnet.tags must be a list ([] = user-owned device)"))
+        else:
+            for t in tags:
+                if not isinstance(t, str) or not _TAG_RE.match(t):
+                    errs.append(_err(file, 1, f"identity.tailnet.tags entry {t!r} must look like 'tag:<name>'"))
+    return errs
+
+
+def _validate_storage(file, storage):
+    """hardware.storage[] is keyed by serial (wq#1692): /dev names move between boots, serials don't.
+    VERIFY is the placeholder for a drive whose serial nobody has read yet."""
+    if storage is None:
+        return []
+    if not isinstance(storage, list):
+        return [_err(file, 1, "hardware.storage must be a list")]
+    errs, seen = [], set()
+    for i, ent in enumerate(storage):
+        if not isinstance(ent, dict):
+            errs.append(_err(file, 1, f"hardware.storage[{i}] must be a mapping"))
+            continue
+        serial = ent.get("serial")
+        if not isinstance(serial, str) or not serial.strip():
+            errs.append(_err(file, 1, f"hardware.storage[{i}].serial is required (a string, or VERIFY), got {serial!r}"))
+        elif serial != "VERIFY" and serial in seen:
+            errs.append(_err(file, 1, f"hardware.storage[{i}].serial {serial!r} is duplicated"))
+        else:
+            seen.add(serial)
+    return errs
+
+
 def _validate_record(file, rec):
     """Per-file structural checks. Returns list of 'file:line: msg' strings."""
     errs = []
@@ -109,6 +159,11 @@ def _validate_record(file, rec):
         stem = os.path.splitext(os.path.basename(file))[0]
         if str(ident["name"]) != stem:
             errs.append(_err(file, 1, f"identity.name {ident['name']!r} != filename {stem!r}"))
+    if isinstance(ident, dict):
+        errs += _validate_tailnet(file, ident.get("tailnet"))
+    hw = rec.get("hardware")
+    if isinstance(hw, dict):
+        errs += _validate_storage(file, hw.get("storage"))
     st = rec.get("status")
     if not isinstance(st, dict):
         errs.append(_err(file, 1, "status block is required"))
@@ -419,8 +474,9 @@ def _state_facts(name):
 
 def observed(name, state_fn=None):
     """Live-observed values for `name`, sourced from state_facts (wq#1631 ownership split):
-    tailscale_ip, lan_ip, ssh user, power plug. Only predicates confirmed to exist in the store
-    today — no hardware.ram/storage predicate exists yet, so those stay YAML-declared until one
+    tailscale_ip, lan_ip, ssh user, power plug, tailnet hostname/tags (wq#1692: the
+    `tailnet_hostname` / `tailnet_tags` predicates the verify probe writes from `tailscale status
+    --json`). No hardware.ram/storage predicate exists yet, so those stay YAML-declared until one
     is ingested. A key absent here is NO-FACT: callers fall back to the declared YAML value."""
     facts = (state_fn or _state_facts)(name)
     out = {}
@@ -448,6 +504,11 @@ def observed(name, state_fn=None):
         m = re.match(r"[A-Za-z]+\d+", plug)
         if m:
             out["plug_id"] = m.group(0)
+    host = _FACT_TAIL_RE.sub("", facts.get("tailnet_hostname") or "").strip()
+    if host:
+        out["tailnet_hostname"] = host
+    if "tailnet_tags" in facts:  # present-but-tagless ("none") is a fact: a user-owned device
+        out["tailnet_tags"] = sorted(set(_TAG_FIND_RE.findall(facts["tailnet_tags"])))
     return out
 
 

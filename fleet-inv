@@ -16,8 +16,8 @@ Root: $FLEET_INVENTORY_ROOT overrides the machines/ dir (tests); default = this 
 $LUMEN_STATE_PY overrides the state-store CLI fleet_inventory.py reads (tests); default = the real one.
 
 Ownership split (wq#1631, MINERVA_PIPELINE_MAP.md §4.2): machines/*.yaml declares governance,
-maint_tier, monitoring policy, roles, ops.known_issues. network.tailscale_ip/lan_ip/ssh.user and
-the power plug binding are OBSERVED — fleet_inventory.py reads them live from state_facts
+maint_tier, monitoring policy, roles, ops.known_issues. network.tailscale_ip/lan_ip/ssh.user,
+identity.tailnet {hostname, tags} (wq#1692) and the power plug binding are OBSERVED — fleet_inventory.py reads them live from state_facts
 (fleet_inventory.observed(), the one place this repo talks to lumen_state.py); the YAML value is
 a declared fallback for when the store has no fact yet, never the authority. `drift` audits the
 declared YAML against the store and flags a stale declared status.status the store contradicts
@@ -255,6 +255,17 @@ _TROUBLE_WORDS = ("OFFLINE", "DEAD", "DECOMMISSIONED", "UNREACHABLE")
 _ACK_WORDS = ("offline", "dead", "decommission", "unreachable")
 
 
+# MagicDNS lowercases node names; `tailscale status --json` reports the OS hostname as typed.
+_CASEFOLD_FIELDS = frozenset({"tailnet.hostname"})
+
+
+def _tags_cell(tags):
+    """Canonical tag-set string; 'none' = a user-owned device (a real value), None = not recorded."""
+    if tags is None:
+        return None
+    return ",".join(sorted(tags)) or "none"
+
+
 def cmd_drift(args):
     r = _roster(args)
     rows, drift = [], 0
@@ -264,10 +275,13 @@ def cmd_drift(args):
         net, st = rec.get("network") or {}, rec.get("status") or {}
         facts = inv._state_facts(name)
         live = inv.observed(name, state_fn=lambda _n, f=facts: f)
+        tn = (rec.get("identity") or {}).get("tailnet") or {}
         pairs = (
             ("tailscale_ip", inv._clean(net.get("tailscale_ip")), live.get("tailscale_ip")),
             ("lan_ip", inv._clean(net.get("lan_ip")), live.get("lan_ip")),
             ("ssh.user", inv._clean((net.get("ssh") or {}).get("user")), live.get("ssh_user")),
+            ("tailnet.hostname", inv._clean(tn.get("hostname")), live.get("tailnet_hostname")),
+            ("tailnet.tags", _tags_cell(tn.get("tags")), _tags_cell(live.get("tailnet_tags"))),
         )
         for field, mine, theirs in pairs:
             if theirs is None:
@@ -276,6 +290,9 @@ def cmd_drift(args):
             elif mine is None:
                 verdict = "UNVERIFIED"
                 cov.count("unverifiable", "no-inventory")
+            elif field in _CASEFOLD_FIELDS and mine.casefold() == theirs.casefold():
+                verdict = "MATCH"
+                cov.count("matched")
             elif mine == theirs:
                 verdict = "MATCH"
                 cov.count("matched")
@@ -307,7 +324,7 @@ def cmd_drift(args):
     for row in [hdr] + rows:
         print("  ".join(str(c).ljust(widths[i]) for i, c in enumerate(row)).rstrip())
     print(f"drift: {drift} disagreement(s) across {len(r)} machines "
-          f"(report only; state_facts is authoritative for network.*/ssh.user/power plug and "
+          f"(report only; state_facts is authoritative for network.*/ssh.user/tailnet hostname+tags/power plug and "
           f"declared status.status vs store lifecycle — fix by ingesting a fact or updating "
           f"ops.known_issues, never by hand-editing the observed keys)")
     print(cov.line())

@@ -149,6 +149,36 @@ def test_validate_monitoring_block_and_name_mismatch(root):
     assert any("!= filename" in e for e in inv.validate(root=root))
 
 
+def _errs(root, yaml_text):
+    (root / "machines" / "alpha.yaml").write_text(yaml_text)
+    return "\n".join(inv.validate(root=root))
+
+
+def test_validate_identity_tailnet(root):
+    base = _yaml("alpha")
+    ok = base.replace("location: bench}", "location: bench, tailnet: {hostname: GL-BE3600, tags: [tag:lumen-fleet]}}")
+    assert _errs(root, ok) == ""
+    assert _errs(root, base.replace("location: bench}", "location: bench, tailnet: {hostname: x, tags: []}}")) == ""
+    assert "must be a mapping" in _errs(root, base.replace("location: bench}", "location: bench, tailnet: nope}"))
+    bad = base.replace("location: bench}", "location: bench, tailnet: {hostname: '', tags: lumen-fleet, extra: 1}}")
+    errs = _errs(root, bad)
+    assert "hostname must be a non-empty string" in errs and "tags must be a list" in errs and "unknown keys" in errs
+    bad = base.replace("location: bench}", "location: bench, tailnet: {tags: [lumen-fleet, 'tag:']}}")
+    assert _errs(root, bad).count("must look like 'tag:<name>'") == 2
+
+
+def test_validate_storage_is_keyed_by_serial(root):
+    def hw(entries):
+        return _yaml("alpha").replace("hardware: {}", f"hardware: {{storage: {entries}}}")
+
+    assert _errs(root, hw("[{type: nvme, serial: ABC123, bay: boot}, {type: ssd, serial: VERIFY}, {type: ssd, serial: VERIFY}]")) == ""
+    assert "storage[0].serial is required" in _errs(root, hw("[{type: nvme, bay: boot}]"))
+    assert "storage[0].serial is required" in _errs(root, hw("[{type: nvme, serial: ''}]"))
+    assert "storage[0].serial is required" in _errs(root, hw("[{type: nvme, serial: 12345}]"))
+    assert "serial 'ABC123' is duplicated" in _errs(root, hw("[{serial: ABC123}, {serial: ABC123}]"))
+    assert "hardware.storage must be a list" in _errs(root, hw("{serial: ABC123}"))
+
+
 def test_validation_error_with_fallback_serves_cache(root, capsys):
     inv.load(root=root)
     (root / "machines" / "alpha.yaml").write_text(_yaml("alpha", status="bogus"))
@@ -207,9 +237,30 @@ def test_observed_reads_state_facts_over_yaml(root):
     live = inv.observed("alpha", state_fn=lambda name: fake if name == "alpha" else {})
     assert live == {"tailscale_ip": "100.99.0.1", "ssh_user": "opsuser", "plug_id": "P7"}
     assert inv.observed("bravo", state_fn=lambda name: {}) == {}
+    # wq#1692: hostname keeps its spaces and loses the store's trailing annotations; a present
+    # tailnet_tags fact with no tag in it is [] (user-owned), an absent one is simply not there
+    tn = {"tailnet_hostname": "Galaxy S26 Ultra  (since 2026-09-10)  [UNVERIFIABLE — no probe]",
+          "tailnet_tags": "none"}
+    assert inv.observed("alpha", state_fn=lambda name: tn) == {
+        "tailnet_hostname": "Galaxy S26 Ultra", "tailnet_tags": []}
+    tagged = {"tailnet_tags": "tag:lumen-fleet, tag:b (since 2026-09-10)"}
+    assert inv.observed("alpha", state_fn=lambda name: tagged) == {"tailnet_tags": ["tag:b", "tag:lumen-fleet"]}
     # ssh_target prefers the live value; NO-FACT (empty state_fn) falls back to the YAML network block
     assert inv.ssh_target("alpha", r, state_fn=lambda name: fake) == "opsuser@100.99.0.1"
     assert inv.ssh_target("alpha", r, state_fn=lambda name: {}) == "alpha@100.64.0.10"
+
+
+def test_real_inventory_records_tailnet_identity():
+    """wq#1666/#1692: 6 nodes carry tag:lumen-fleet, 3 tailnet hostnames differ from the inventory name."""
+    r = inv.load(strict=True, fallback=False, root=os.path.dirname(HERE))
+    tn = {x["identity"]["name"]: x["identity"]["tailnet"] for x in inv.all(r)}
+    assert len(tn) == 25
+    assert sorted(n for n, t in tn.items() if t["tags"]) == ["bes", "khepri", "nephthys", "sia", "sobek", "wadjet"]
+    assert all(t["tags"] == ["tag:lumen-fleet"] for t in tn.values() if t["tags"])
+    assert {n: t["hostname"] for n, t in tn.items() if t["hostname"] != n} == {
+        "be3600": "GL-BE3600", "toilet": "toilet-940X5N", "phone": "Galaxy S26 Ultra"}
+    for x in inv.all(r):
+        assert all(e["serial"] for e in (x.get("hardware") or {}).get("storage") or [])
 
 
 def test_real_inventory_is_valid():

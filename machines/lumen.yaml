@@ -1,5 +1,5 @@
 # seeded-from: lumen_state + operator quick-ref (2026-09-07); hardware verified live wq#1666 2026-09-10 (dmidecode/lsblk/lscpu/ip link)
-identity: {name: lumen, aliases: [lumen-1], make_model: "Dell Precision Tower 5810", serial: FK6FV52, location: rack}
+identity: {name: lumen, aliases: [lumen-1], make_model: "Dell Precision Tower 5810", serial: FK6FV52, location: rack, tailnet: {hostname: lumen, tags: []}}
 status:
   status: active
   power: on

@@ -2,8 +2,8 @@
 
 Source of truth for DECLARED machine config: governance, maint_tier, monitoring policy, roles,
 ops.known_issues. Humans edit the YAML for these; agents/orchestrator/worker/judge/supervisor/
-doctor/broker READ it (never guess node facts elsewhere). network.tailscale_ip/lan_ip/ssh.user
-and hardware.power_hw.plug_id are OBSERVED instead — state_facts is their authority, and
+doctor/broker READ it (never guess node facts elsewhere). network.tailscale_ip/lan_ip/ssh.user,
+identity.tailnet and hardware.power_hw.plug_id are OBSERVED instead — state_facts is their authority, and
 fleet_inventory.py reads them live (observed()); the YAML value there is a fallback for when
 the store has no fact yet, not the truth (wq#1631, MINERVA_PIPELINE_MAP.md §4.2). `fleet-inv
 drift` audits the declared YAML against the store.
@@ -15,6 +15,15 @@ Grounded in NetBox's device + inventory-item model.
   make_model:      Dell T5810 / Mac Pro 6,1 / ASRock 4U12G / Galaxy Book Pro 360
   serial:          manufacturer serial / asset tag
   location:        rack / bench / shelf / where it physically is
+  tailnet:         {hostname, tags}     # OBSERVED (wq#1692) — state_facts `<node>.tailnet_hostname` /
+                                        # `<node>.tailnet_tags`, written by the verify probe from
+                                        # `tailscale status --json`; the YAML value is the NO-FACT fallback
+                   #   hostname  the node's HostName as tailscale reports it; NOT always identity.name
+                   #             (be3600 = GL-BE3600, toilet = toilet-940X5N, phone = "Galaxy S26 Ultra").
+                   #             `fleet-inv drift` compares it case-insensitively (MagicDNS lowercases).
+                   #   tags      ACL tags, e.g. [tag:lumen-fleet] (bes, khepri, nephthys, sia, sobek,
+                   #             wadjet). [] = a user-owned device — a real value, not "unknown"; omit the
+                   #             key when nobody has read it. Each entry must match `tag:<name>`.
 
 ## status   (drives monitoring + dispatch — the nephthys fix lives here)
   status:          active | standby | bench | in-storage | decommissioned | dead
@@ -47,7 +56,12 @@ Grounded in NetBox's device + inventory-item model.
 ## hardware   (the spec sheet — edit here on upgrades; keep history)
   cpu:             {model, cores, gen}
   ram:             {size_gb, type, speed, dimms_used, dimms_total, ceiling_gb}
-  storage:         [{type, size, interface, serial, bay}]
+  storage:         [{serial, type, size, model, interface, bay}]
+                   #   serial is the REQUIRED key of every entry (the validator rejects a missing or
+                   #   empty one, and a duplicate within a node); write VERIFY when nobody has read
+                   #   it yet. /dev names (sda, nvme0n1, mmcblk1) are NOT stable — they reorder across
+                   #   boots and hotplug — so never key or match a drive on them. `bay` is where the
+                   #   drive sits (boot, bay3), a label for humans, not an identity.
   gpu:             [{model, vram_gb}]
   board:           {model, bios, quirks}   # quirks e.g. "restore-on-AC doesn't persist (no nvram)"
   power_hw:        {psu_w, ups, plug_id, ac_restore, recovery}  # recovery = how to bring it back

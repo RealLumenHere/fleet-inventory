@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current be3600 (be3600.role GL-iNet Slate 7 workbench router / be3600.tailscale_ip)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the device
-identity: {name: be3600, aliases: [slate7, workbench-router], make_model: "GL.iNet Slate 7 (GL-BE3600)", serial: VERIFY, location: workbench}
+identity: {name: be3600, aliases: [slate7, workbench-router], make_model: "GL.iNet Slate 7 (GL-BE3600)", serial: VERIFY, location: workbench, tailnet: {hostname: GL-BE3600, tags: []}}
 status:
   status: active
   power: on
@@ -13,7 +13,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [type: VERIFY]
+  storage: [{type: VERIFY, serial: VERIFY}]
   gpu: []
   board: {model: GL-BE3600, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: "power-cycle"}

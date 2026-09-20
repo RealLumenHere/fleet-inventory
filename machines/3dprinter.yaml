@@ -1,6 +1,6 @@
 # seeded-from: lumen_state current 3dprinter + sentinel Gatus 1-nodes block (config.yaml)
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
-identity: {name: 3dprinter, aliases: [argus], make_model: "LG 24CQ650I-6N all-in-one", serial: VERIFY, location: VERIFY}
+identity: {name: 3dprinter, aliases: [argus], make_model: "LG 24CQ650I-6N all-in-one", serial: VERIFY, location: VERIFY, tailnet: {hostname: 3dprinter, tags: []}}
 status:
   status: standby         # powered off between print jobs; tailnet OFFLINE since 2026-07-26 — declared standby so the store's OFFLINE fact is not a lifecycle drift (wq#1666)
   power: off             # tailnet OFFLINE since 2026-07-26 (46d at wq#1666 2026-09-10) — AIO gets turned off
@@ -14,7 +14,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [type: VERIFY]
+  storage: [{type: VERIFY, serial: VERIFY}]
   gpu: []
   board: {model: LG 24CQ650I-6N, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: VERIFY, ac_restore: VERIFY, recovery: "physical power button (AIO)"}

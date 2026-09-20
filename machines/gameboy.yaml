@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: gameboy, aliases: [kiosk, gameboy-pc], make_model: "Microsoft Surface Pro 6", serial: "032633490753", location: VERIFY}
+identity: {name: gameboy, aliases: [kiosk, gameboy-pc], make_model: "Microsoft Surface Pro 6", serial: "032633490753", location: VERIFY, tailnet: {hostname: gameboy, tags: []}}
 status:
   status: active
   power: on

@@ -1,6 +1,6 @@
 # seeded-from: sentinel Gatus 1-nodes block (config.yaml) — lumen_state has no phone.* facts
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the device
-identity: {name: phone, aliases: [s26-ultra], make_model: "Samsung Galaxy S26 Ultra", serial: VERIFY, location: roaming}
+identity: {name: phone, aliases: [s26-ultra], make_model: "Samsung Galaxy S26 Ultra", serial: VERIFY, location: roaming, tailnet: {hostname: "Galaxy S26 Ultra", tags: []}}
 status:
   status: active
   power: on
@@ -14,7 +14,7 @@ network:
 hardware:
   cpu: {model: VERIFY, cores: VERIFY, gen: VERIFY}
   ram: {size_gb: VERIFY, type: VERIFY}
-  storage: [type: VERIFY]
+  storage: [{type: VERIFY, serial: VERIFY}]
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: false, plug_id: none, ac_restore: n/a, recovery: "Frank"}

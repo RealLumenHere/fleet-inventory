@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10
-identity: {name: anubis, aliases: [], make_model: "Dell OptiPlex 3090 UFF", serial: 1XLN9R3, location: rack}
+identity: {name: anubis, aliases: [], make_model: "Dell OptiPlex 3090 UFF", serial: 1XLN9R3, location: rack, tailnet: {hostname: anubis, tags: []}}
 status:
   status: active
   power: on

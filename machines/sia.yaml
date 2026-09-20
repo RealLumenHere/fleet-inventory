@@ -1,5 +1,5 @@
 # seeded-from: lumen_state (2026-09-07); hardware verified live wq#1666 2026-09-10 (DMI blocked: sudo on sia needs a password)
-identity: {name: sia, aliases: [], make_model: "VERIFY (N100 mini-PC; dmidecode blocked — sudo not NOPASSWD for the fleet key)", serial: VERIFY, location: rack}
+identity: {name: sia, aliases: [], make_model: "VERIFY (N100 mini-PC; dmidecode blocked — sudo not NOPASSWD for the fleet key)", serial: VERIFY, location: rack, tailnet: {hostname: sia, tags: [tag:lumen-fleet]}}
 status:
   status: active
   power: on
