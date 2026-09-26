@@ -16,10 +16,15 @@ import fleet_inventory as inv  # noqa: E402
 def _db(tmp_path, facts, checks):
     db = tmp_path / "m.db"
     c = sqlite3.connect(db)
-    c.execute("CREATE TABLE state_facts (id TEXT, subject TEXT, predicate TEXT, value TEXT, valid_to TEXT)")
-    c.execute("CREATE TABLE fact_verifications (id TEXT, fact_id TEXT, outcome TEXT, detail TEXT, ts TEXT)")
-    c.executemany("INSERT INTO state_facts VALUES (?,?,?,?,?)", facts)
-    c.executemany("INSERT INTO fact_verifications VALUES (?,?,?,?,?)", checks)
+    c.execute("CREATE TABLE state_facts (id TEXT, subject TEXT, predicate TEXT, value TEXT, "
+              "valid_to TEXT, ingested_at TEXT)")
+    c.execute("CREATE TABLE fact_verifications (id TEXT, fact_id TEXT, subject TEXT, "
+              "predicate TEXT, outcome TEXT, detail TEXT, ts TEXT)")
+    c.executemany("INSERT INTO state_facts VALUES (?,?,?,?,?,?)",
+                  [f + ("2026-01-01",) if len(f) == 5 else f for f in facts])
+    c.executemany("INSERT INTO fact_verifications VALUES (?,?,?,?,?,?,?)",
+                  [(v[0], v[1], "box", {"h1": "hardware", "s1": "storage_layout"}.get(v[1], "x"))
+                   + v[2:] if len(v) == 5 else v for v in checks])
     c.commit()
     c.close()
     return str(db)
@@ -100,3 +105,21 @@ def test_verify_sudo_denied_is_answered_not_offline(tmp_path):
                           _d("sia", "storage", "confirmed")]}
     rc, out, _ = _run(tmp_path, payload, "sia")
     assert rc == 0 and "OFFLINE" not in out and "sudo -n denied" in out
+
+
+def test_superseded_row_counts_as_evidence_for_the_new_fact(tmp_path, monkeypatch):
+    monkeypatch.delenv("FLEET_INV_NO_STATE", raising=False)
+    db = _db(tmp_path,
+             [("k0", "box", "kernel", "7.0.0-30", "2026-09-26T00:56:57", "2026-09-21T06:00:00"),
+              ("k1", "box", "kernel", "7.0.0-31", None, "2026-09-26T00:56:57")],
+             [("v1", "k0", "box", "kernel", "superseded", None, "2026-09-26T00:56:57"),
+              ("v0", "k0", "box", "kernel", "confirmed", None, "2026-09-21T06:00:00")])
+    assert inv.identity_evidence("box", db=db)["kernel"][1] == "confirmed"
+
+
+def test_stale_supersession_is_not_evidence(tmp_path, monkeypatch):
+    """A human re-ingested after the probe's supersession: the probe never saw this value."""
+    monkeypatch.delenv("FLEET_INV_NO_STATE", raising=False)
+    db = _db(tmp_path, [("k2", "box", "kernel", "7.0.0-32", None, "2026-09-27T00:00:00")],
+             [("v2", "k1", "box", "kernel", "superseded", None, "2026-09-26T00:56:57")])
+    assert inv.identity_evidence("box", db=db)["kernel"] == ("kernel", None, None, None)

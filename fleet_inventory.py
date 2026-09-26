@@ -496,13 +496,20 @@ def identity_evidence(name, db=None):
         for field, preds in IDENTITY_FIELDS:
             for pred in preds:
                 row = conn.execute(
-                    "SELECT id FROM state_facts WHERE subject=? AND predicate=? AND valid_to IS NULL",
-                    (name.lower(), pred)).fetchone()
+                    "SELECT id, ingested_at FROM state_facts WHERE subject=? AND predicate=? "
+                    "AND valid_to IS NULL", (name.lower(), pred)).fetchone()
                 if not row:
                     continue
+                # A probe that superseded the old value logs its row against the CLOSED fact
+                # (ts == the new fact's ingested_at), so the new open fact would read "never
+                # checked" right after being observed. That row is evidence for the open fact.
                 ver = conn.execute(
                     "SELECT outcome, detail, ts FROM fact_verifications WHERE fact_id=? "
-                    "ORDER BY ts DESC LIMIT 1", (row[0],)).fetchone()
+                    "OR (subject=? AND predicate=? AND outcome='superseded' AND ts>=?) "
+                    "ORDER BY ts DESC LIMIT 1",
+                    (row[0], name.lower(), pred, row[1] or "")).fetchone()
+                if ver and ver[0] == "superseded":
+                    ver = ("confirmed",) + tuple(ver[1:])   # the probe observed this very value
                 out[field] = (pred,) + (tuple(ver) if ver else (None, None, None))
                 break
     except sqlite3.Error:
