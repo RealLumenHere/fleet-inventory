@@ -23,6 +23,9 @@ identity.tailnet {hostname, tags} (wq#1692) and the power plug binding are OBSER
 a declared fallback for when the store has no fact yet, never the authority. `drift` audits the
 declared YAML against the store and flags a stale declared status.status the store contradicts
 (e.g. YAML says active, the store carries an OFFLINE/DEAD signal ops.known_issues never mentions).
+hardware.ram.size_gb/storage[].serial stay YAML-declared too (render.py reads them for fleet.html),
+but `drift` cross-checks them against the store's stated ram/storage text (wq#2758) so the two
+copies can't silently disagree.
 
 `drift` also reports coverage (wq#1611): 0 DRIFT over N fields nobody could compare is not
 success. NO-FACT is ratcheted against a baseline file — it may fall, never grow silently.
@@ -315,6 +318,13 @@ _ACK_WORDS = ("offline", "dead", "decommission", "unreachable")
 # MagicDNS lowercases node names; `tailscale status --json` reports the OS hostname as typed.
 _CASEFOLD_FIELDS = frozenset({"tailnet.hostname"})
 
+# wq#2758: hardware.ram.size_gb/storage[].serial stay YAML-declared (wq#1631 never moved them to
+# state_facts observed()), but the store's ram/storage free text is now box-confirmed by
+# lumen-verify (wq#1688, the identity.ram/identity.storage rows above). Cross-checking the
+# declared YAML against that stated text catches the two hand-kept copies drifting apart without
+# a second probe — YAML-vs-store, like every other field here, not a re-verification of the box.
+_RAM_GB_RE = re.compile(r"^\s*(\d+)\s*GB\b", re.I)
+
 
 def _tags_cell(tags):
     """Canonical tag-set string; 'none' = a user-owned device (a real value), None = not recorded."""
@@ -381,6 +391,47 @@ def cmd_drift(args):
                     cov.count("unverifiable", "unverified")
             if verdict != "MATCH" or args.verbose:
                 rows.append((name, f"identity.{pred}", "-", shown, verdict))
+        # wq#2758: YAML hardware.ram.size_gb/storage[].serial vs the store's stated ram/storage
+        # text (already box-confirmed above) — two hand-kept copies of the same identity.
+        hw = rec.get("hardware") or {}
+        ram_text = facts.get("ram")
+        yaml_ram = inv._clean((hw.get("ram") or {}).get("size_gb"))
+        m = _RAM_GB_RE.match(ram_text) if ram_text else None
+        store_ram = m.group(1) if m else None
+        if store_ram is None:
+            verdict = "NO-FACT"
+            cov.count("unverifiable", "no-fact")
+        elif yaml_ram is None:
+            verdict = "UNVERIFIED"
+            cov.count("unverifiable", "no-inventory")
+        elif yaml_ram == store_ram:
+            verdict = "MATCH"
+            cov.count("matched")
+        else:
+            verdict, drift = "DRIFT", drift + 1
+            cov.count("drifted")
+        if verdict != "MATCH" or args.verbose:
+            rows.append((name, "hardware.ram.size_gb", yaml_ram or "VERIFY",
+                        f"{store_ram}GB" if store_ram else (ram_text or "-"), verdict))
+
+        storage_text = facts.get("storage") or facts.get("storage_layout")
+        yaml_serials = [inv._clean(ent.get("serial")) for ent in (hw.get("storage") or [])
+                        if isinstance(ent, dict) and inv._clean(ent.get("serial"))]
+        if storage_text is None:
+            verdict = "NO-FACT"
+            cov.count("unverifiable", "no-fact")
+        elif not yaml_serials:
+            verdict = "UNVERIFIED"
+            cov.count("unverifiable", "no-inventory")
+        elif any(s.lower() not in storage_text.lower() for s in yaml_serials):
+            verdict, drift = "DRIFT", drift + 1
+            cov.count("drifted")
+        else:
+            verdict = "MATCH"
+            cov.count("matched")
+        if verdict != "MATCH" or args.verbose:
+            rows.append((name, "hardware.storage.serial", ",".join(yaml_serials) or "VERIFY",
+                        (storage_text or "-")[:60], verdict))
         # declared-vs-store lifecycle check (schema check itself is `fleet-inv check`, separate).
         live_status = (facts.get("status") or "").strip()
         known = " ".join((rec.get("ops") or {}).get("known_issues") or []).lower()
