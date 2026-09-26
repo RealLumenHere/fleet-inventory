@@ -229,7 +229,10 @@ def test_real_inventory_feeds_are_sane():
     r = inv.load(strict=True, fallback=False)
     t = dict(inv.ssh_targets(r))
     assert t["sia"] == "sia@100.111.15.120" and t["sobek"] == "sobek@100.86.156.91"
-    assert "nephthys" not in dict(inv.ssh_targets(r, monitored=False))
+    # wq#1688: every decommissioned/dead/in-storage box stays out of the fan-out (was a
+    # nephthys pin that broke when nephthys was un-retired, wq#2634)
+    gone = {x["identity"]["name"] for x in inv.all(r) if x["status"]["status"] in inv.UNMONITORED_STATUSES}
+    assert gone and not gone & set(dict(inv.ssh_targets(r, monitored=False)))
     maint = dict(inv.ssh_targets(r, maintenance=True, local=""))
     assert "thor" not in maint and maint["lumen"] == "" or inv.is_local(r["lumen"]) is False
     assert inv.plug_map(r)["P11"] == "lumen" and inv.plug_map(r)["P3"] == "hathor"

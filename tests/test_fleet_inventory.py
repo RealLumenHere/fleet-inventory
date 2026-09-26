@@ -268,6 +268,10 @@ def test_real_inventory_is_valid():
     real_root = os.path.dirname(HERE)
     assert inv.validate(root=real_root) == []
     r = inv.load(strict=True, fallback=False, root=real_root)
-    assert not inv.is_monitored("nephthys", r)
+    # wq#1688: was `not is_monitored("nephthys")`, a pin on one node's lifecycle that went
+    # false when nephthys was un-retired (wq#2634). Assert the invariant instead.
+    retired = [x["identity"]["name"] for x in inv.all(r)
+               if x["status"]["status"] in inv.UNMONITORED_STATUSES]
+    assert retired and not any(inv.is_monitored(n, r) for n in retired)
     assert inv.is_monitored("lumen", r)
     assert r["lumen"]["status"]["monitoring"]["gatus"] is False

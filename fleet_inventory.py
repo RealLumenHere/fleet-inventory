@@ -50,6 +50,12 @@ AQ_KEY = "inventory:parse-error"
 # and the power plug binding. This module is the one place that reads it for those keys —
 # consumers call observed(), never lumen_state.py directly. $LUMEN_STATE_PY overrides for tests.
 LUMEN_STATE = os.environ.get("LUMEN_STATE_PY", "/home/lumen/minerva/lumen_state.py")
+MINERVA_DB = os.environ.get("MINERVA_DB", "/home/lumen/minerva/minerva.db")
+# wq#1688: hardware identity classes and the predicate names each may be stored under
+# (wq#1666 seeded some nodes under storage_layout / nic_config). kernel is os_kernel's.
+IDENTITY_FIELDS = (("hardware", ("hardware",)), ("ram", ("ram",)),
+                   ("storage", ("storage", "storage_layout")),
+                   ("nic", ("nic", "nic_config")), ("kernel", ("kernel",)))
 _FACT_RE = re.compile(r"^\s*([a-z0-9_-]+)\.([a-z0-9_]+)\s+=\s+(.*?)\s*(?:\(since [^)]*\))?\s*$", re.I)
 _IP_RE = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 _TAG_RE = re.compile(r"^tag:[A-Za-z0-9][A-Za-z0-9_-]*$")
@@ -470,6 +476,48 @@ def _state_facts(name):
         if m and m.group(1).lower() == name.lower():
             facts[m.group(2).lower()] = m.group(3).strip()
     return facts
+
+
+def identity_evidence(name, db=None):
+    """wq#1688: {field: (predicate, outcome, detail, ts)} for `name`'s identity facts, from
+    the NEWEST fact_verifications row of each OPEN fact (written by `lumen-verify`). A field
+    with no open fact is absent (NO-FACT); an open fact never checked has outcome None.
+    Read-only (sqlite mode=ro); {} when FLEET_INV_NO_STATE is set or the store is unreadable,
+    so a store outage degrades drift to NO-FACT instead of breaking an inventory read."""
+    if os.environ.get("FLEET_INV_NO_STATE"):
+        return {}
+    import sqlite3
+    try:
+        conn = sqlite3.connect(f"file:{db or MINERVA_DB}?mode=ro", uri=True, timeout=10)
+    except sqlite3.Error:
+        return {}
+    out = {}
+    try:
+        for field, preds in IDENTITY_FIELDS:
+            for pred in preds:
+                row = conn.execute(
+                    "SELECT id FROM state_facts WHERE subject=? AND predicate=? AND valid_to IS NULL",
+                    (name.lower(), pred)).fetchone()
+                if not row:
+                    continue
+                ver = conn.execute(
+                    "SELECT outcome, detail, ts FROM fact_verifications WHERE fact_id=? "
+                    "ORDER BY ts DESC LIMIT 1", (row[0],)).fetchone()
+                out[field] = (pred,) + (tuple(ver) if ver else (None, None, None))
+                break
+    except sqlite3.Error:
+        return {}
+    finally:
+        conn.close()
+    return out
+
+
+def last_verified(name, db=None):
+    """Newest confirmed identity check for `name` (ISO date) from the store, or None.
+    wq#1688: observed evidence lives in the store (wq#1631 split), so fleet-inv reports
+    this instead of rewriting machines/*.yaml ops.last_verified on every probe run."""
+    ts = [v[3] for v in identity_evidence(name, db).values() if v[1] == "confirmed" and v[3]]
+    return max(ts)[:10] if ts else None
 
 
 def observed(name, state_fn=None):

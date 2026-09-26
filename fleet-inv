@@ -7,7 +7,8 @@
                      [--self TEXT] [--order name|maint] [--fields f,g,...]
   fleet-inv plugs        # plug_id<TAB>name<TAB>power — hardware.power_hw.plug_id per machine
   fleet-inv check
-  fleet-inv drift        # schema check + declared-vs-store lifecycle check — REPORT ONLY, never writes state
+  fleet-inv verify [<node>|--all] [--dry-run]  # confirm hardware identity facts live via lumen-verify (wq#1688)
+  fleet-inv drift        # schema check + declared-vs-store lifecycle + identity evidence — REPORT ONLY, never writes state
 
 ssh-list is the roster feed for the ops scripts (wq#1456): fleet-keymesh, fleet-roll-reboot,
 rotate-fleet-pw read it instead of carrying a NODES list. Default = MONITORED() machines with a
@@ -31,6 +32,7 @@ Exit codes: 0 ok · 1 error/invalid · 2 drift found (drift) or name/key missing
 """
 import argparse
 import json
+import subprocess
 import os
 import re
 import sys
@@ -172,6 +174,61 @@ def cmd_check(args):
     return 0
 
 
+LUMEN_VERIFY = os.environ.get("LUMEN_VERIFY", "/home/lumen/bin/lumen-verify")
+IDENTITY_PROBES = "node_identity,node_storage,os_kernel"
+
+
+def cmd_verify(args):
+    """wq#1688: confirm hardware identity facts against the box NOW. Delegates to
+    `lumen-verify node`, which confirms curated free text by stable tokens (DMI serial,
+    MACs, disk serials, DIMM sum) through lumen_state.report_observation and never rewrites
+    it. A node that answered nothing is reported OFFLINE with its newest stored fact."""
+    r = _roster(args)
+    if bool(args.node) == bool(args.all):
+        print("ERROR: give exactly one of <node> or --all", file=sys.stderr)
+        return 1
+    names = sorted(r) if args.all else [args.node]
+    unknown = [n for n in names if n not in r]
+    if unknown:
+        print(f"ERROR: not in inventory: {', '.join(unknown)}", file=sys.stderr)
+        return 1
+    cmd = [sys.executable, LUMEN_VERIFY, "node", *names, "--probes", IDENTITY_PROBES, "--json"]
+    if args.dry_run:
+        cmd.append("--dry-run")
+    p = subprocess.run(cmd, capture_output=True, text=True)
+    if p.returncode != 0:
+        print(f"ERROR: lumen-verify rc={p.returncode}: {p.stderr.strip()[:300]}", file=sys.stderr)
+        return 1
+    res = json.loads(p.stdout)
+    by_node = {}
+    for d in res["detail"]:
+        by_node.setdefault(d["subject"], []).append(d)
+    rc = 0
+    for name in names:
+        rows = by_node.get(name, [])
+        answered = [d for d in rows if d["outcome"] in ("confirmed", "superseded")
+                    or (d.get("error") or "").startswith(("MISMATCH", "sudo -n denied",
+                                                          "stored value states", "no DMI"))]
+        if not rows:
+            print(f"{name}: no identity facts to verify (NO-FACT)")
+            continue
+        if not answered:
+            why = (rows[0].get("error") or "no answer").splitlines()[0][:100]
+            fb = next((d for d in rows if d["predicate"] == "hardware"), rows[0])
+            print(f"{name}: OFFLINE/unreachable ({why}) — newest stored {fb['predicate']} = "
+                  f"{(fb['value'] or '')[:80]}")
+            continue
+        lv = "" if args.dry_run else f" · last_verified {inv.last_verified(name) or '-'} (store)"
+        print(f"{name}:{lv}")
+        for d in sorted(rows, key=lambda d: d["predicate"]):
+            err = (d.get("error") or "").splitlines()[0][:110] if d.get("error") else ""
+            print(f"  {d['predicate']:15} {d['outcome']:10} {err}")
+            if err.startswith("MISMATCH"):
+                rc = 2
+    print(f"verify: {res['counts']}")
+    return rc
+
+
 class Coverage:
     """checked/matched/drifted/unverifiable for one audit run.
 
@@ -301,6 +358,29 @@ def cmd_drift(args):
                 cov.count("drifted")
             if verdict != "MATCH" or args.verbose:
                 rows.append((name, field, mine or "VERIFY", theirs or "-", verdict))
+        # wq#1688: identity evidence (hardware/ram/storage/nic/kernel) from the newest
+        # lumen-verify check of each open fact. The 3 network fields used to be the only thing
+        # compared (0 drift reported while 28 identity disagreements sat unchecked).
+        ev = inv.identity_evidence(name)
+        for field, _preds in inv.IDENTITY_FIELDS:
+            e = ev.get(field)
+            if e is None:
+                verdict, shown, pred = "NO-FACT", "-", field
+                cov.count("unverifiable", "no-fact")
+            else:
+                pred, outcome, detail, ts = e
+                shown = f"{outcome or 'never checked'} {(ts or '')[:10]}".strip()
+                if outcome == "confirmed":
+                    verdict = "MATCH"
+                    cov.count("matched")
+                elif (detail or "").startswith("MISMATCH"):
+                    verdict, drift, shown = "DRIFT", drift + 1, detail[:60]
+                    cov.count("drifted")
+                else:
+                    verdict = "UNVERIFIED"
+                    cov.count("unverifiable", "unverified")
+            if verdict != "MATCH" or args.verbose:
+                rows.append((name, f"identity.{pred}", "-", shown, verdict))
         # declared-vs-store lifecycle check (schema check itself is `fleet-inv check`, separate).
         live_status = (facts.get("status") or "").strip()
         known = " ".join((rec.get("ops") or {}).get("known_issues") or []).lower()
@@ -365,6 +445,11 @@ def main(argv=None):
     p.set_defaults(fn=cmd_plugs)
     p = sub.add_parser("check", help="validate every machines/*.yaml; refresh last-good on success")
     p.set_defaults(fn=cmd_check)
+    p = sub.add_parser("verify", help="confirm hardware identity facts live via lumen-verify (wq#1688)")
+    p.add_argument("node", nargs="?", help="one node (or --all)")
+    p.add_argument("--all", action="store_true", help="every machine in the roster")
+    p.add_argument("--dry-run", action="store_true", help="probe + report, write no evidence")
+    p.set_defaults(fn=cmd_verify)
     p = sub.add_parser("drift", help="declared YAML vs state_facts: network/ssh/plug fields + lifecycle (report only)")
     p.add_argument("-v", "--verbose", action="store_true", help="also print MATCH rows")
     p.add_argument("--baseline", metavar="PATH", help=f"NO-FACT ratchet file (default {BASELINE_NAME} in the root)")
