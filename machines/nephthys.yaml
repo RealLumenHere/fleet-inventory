@@ -19,9 +19,9 @@ hardware:
   gpu: [{model: "2x AMD Tahiti LE (PCI 1002:679e, Radeon HD 7870 XT-class, GCN 1.0) — NOT Curacao XT like isis/hathor (2026-09-24 correction); amdgpu-bound, power D0, no compute stack", vram_gb: 2}]
   board: {model: "MacPro6,1", bios: "BootROM 481.0.0.0.0 (2023-10-07, final)", quirks: "afterg3 auto-boot enabled, afterg3-auto-boot.service deployed+enabled (wq#390 AC-restore validated 2026-07-31)"}
   power_hw: {psu_w: 450, plug_id: P2, ac_restore: "auto-boots on AC restore (validated)", recovery: "AC-cycle via plug p2"}
-software: {os: "Ubuntu 26.04 LTS", kernel: "7.0.0-30-generic"}
+software: {os: "Ubuntu 26.04 LTS", kernel: "7.0.0-34-generic"}
 roles: [local-worker, inference, test-bench]
 services: [ollama]
 serves: [nephthys-qwen14b (qwen3:14b, LiteLLM group local-worker, OLLAMA_CONTEXT_LENGTH=32768)]
 governance: {crown_jewel: false, off_limits: false}
-ops: {maint_tier: 1.5, provisioned: 2026-06, last_verified: 2026-09-25, upgrades: [{date: 2026-07-15, change: "64GB matched DDR3 kit installed"}], known_issues: ["Abrupt power loss 2026-09-24 18:33Z while running a CPU-saturating benchmark (wq#2447) + a dispatched fworker together — do not stack CPU-saturating jobs on a Mac Pro (same rule as hathor). Frank power-cycled it back up 2026-09-25.", "Gatus sshauth check still commented out since the 2026-08-22 decommission — un-retire (2026-09-18) never re-enabled it (config.yaml:418-422, wq#589)."]}
+ops: {maint_tier: 1.5, provisioned: 2026-06, last_verified: 2026-09-28, upgrades: [{date: 2026-07-15, change: "64GB matched DDR3 kit installed"}], known_issues: ["Abrupt power loss 2026-09-24 18:33Z while running a CPU-saturating benchmark (wq#2447) + a dispatched fworker together — do not stack CPU-saturating jobs on a Mac Pro (same rule as hathor). Frank power-cycled it back up 2026-09-25.", "Abrupt idle power loss 2026-09-24/09-25/09-27 (boots end with no shutdown sequence, ollama idle): each preceded within seconds by PCIe AER storms (70-2000/hr) on root port 00:01.0 / PLX 10:00.0; healthy boot logged ~8 in 22h (wq#2776). mbpfan installed 2026-09-28 (fan1_manual=1) — it does not address this.", "Gatus sshauth check still commented out since the 2026-08-22 decommission — un-retire (2026-09-18) never re-enabled it (config.yaml:418-422, wq#589)."]}
