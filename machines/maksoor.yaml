@@ -1,0 +1,20 @@
+# wq#3638: added 2026-10-08 from lumen_state (maksoor.*); primary RE workstation, was missing from roster so ssh-health sweeps never probed it
+identity: {name: maksoor, aliases: [], make_model: "Samsung NP940X5N-X01US (Notebook 9 Pro)", serial: VERIFY, location: desk, tailnet: {hostname: maksoor, tags: []}}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 300, alert: false, alert_desc: "maksoor unreachable", gatus: false}
+network:
+  tailscale_ip: 100.81.204.74
+  lan_ip: 192.168.8.140
+  ssh: {user: maksoor, method: key}
+hardware:
+  cpu: {model: "Intel Core i7-8550U", cores: 4, threads: 8}
+  ram: {size_gb: 16, type: VERIFY}
+  storage: [{type: nvme, size: 512GB, model: "Samsung PM961 MZVKW512HMJP", serial: VERIFY, bay: boot}]
+software: {os: "Ubuntu 26.04", kernel: "7.0.0-38-generic"}
+roles: [re-workstation]
+serves: [Primary reverse-engineering workstation (replaces Thor for RE); GUI over RDP]
+governance: {crown_jewel: false, never_restart: true, off_limits: false}
+ops: {maint_tier: 3, provisioned: 2026-09-17, last_verified: null, upgrades: [], known_issues: []}

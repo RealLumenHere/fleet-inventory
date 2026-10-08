@@ -1,0 +1,20 @@
+# wq#3497: seeded from lumen_state 2026-10-07
+identity: {name: khnum, aliases: [], make_model: "Station P1 non-Pro (RK3399)", serial: VERIFY, location: rack, tailnet: {hostname: khnum, tags: [tag:lumen-fleet]}}
+status:
+  status: active
+  power: on
+  monitor: true
+  monitoring: {interval_s: 300, alert: true, alert_desc: "khnum unreachable", gatus: false}
+network:
+  tailscale_ip: 100.76.194.58
+  lan_ip: 192.168.8.137
+  ssh: {user: khnum, method: key}
+hardware:
+  cpu: {model: VERIFY, cores: VERIFY, threads: VERIFY}
+  ram: {size_gb: VERIFY, type: VERIFY}
+  storage: [{type: nvme, size: VERIFY, model: VERIFY, serial: VERIFY, bay: boot}]
+software: {os: VERIFY, kernel: VERIFY}
+roles: [commander-cold-standby]
+serves: [Commander cold standby]
+governance: {crown_jewel: false, never_restart: false, off_limits: false}
+ops: {maint_tier: 3, provisioned: 2026-10-05, last_verified: null, upgrades: [], known_issues: []}
