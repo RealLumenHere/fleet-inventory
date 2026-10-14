@@ -251,11 +251,12 @@ def test_observed_reads_state_facts_over_yaml(root):
 
 
 def test_real_inventory_records_tailnet_identity():
-    """wq#1666/#1692: 6 nodes carry tag:lumen-fleet, 3 tailnet hostnames differ from the inventory name."""
+    """wq#1666/#1692/#3885: 11 nodes carry tag:lumen-fleet, 3 tailnet hostnames differ from the inventory name."""
     r = inv.load(strict=True, fallback=False, root=os.path.dirname(HERE))
     tn = {x["identity"]["name"]: x["identity"]["tailnet"] for x in inv.all(r)}
-    assert len(tn) == 25
-    assert sorted(n for n, t in tn.items() if t["tags"]) == ["bes", "khepri", "nephthys", "sia", "sobek", "wadjet"]
+    assert len(tn) == 31
+    assert sorted(n for n, t in tn.items() if t["tags"]) == [
+        "bes", "horus", "khepri", "khnum", "neith", "nephthys", "ptah", "sekhmet", "sia", "sobek", "wadjet"]
     assert all(t["tags"] == ["tag:lumen-fleet"] for t in tn.values() if t["tags"])
     assert {n: t["hostname"] for n, t in tn.items() if t["hostname"] != n} == {
         "be3600": "GL-BE3600", "toilet": "toilet-940X5N", "phone": "Galaxy S26 Ultra"}
