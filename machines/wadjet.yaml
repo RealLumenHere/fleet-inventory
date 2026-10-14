@@ -2,9 +2,9 @@
 # seeded: 2026-09-07 (wq#1453) — every VERIFY is unconfirmed against the box
 identity: {name: wadjet, aliases: [], make_model: "VERIFY (prose only: Apple Mac Pro 6,1, GPU-B absent, RAPL PL1 45W — no structured fact in any store; read at next power-on)", serial: VERIFY, location: shelf, tailnet: {hostname: wadjet, tags: [tag:lumen-fleet]}}
 status:
-  status: standby
-  power: off             # powered off, tailnet-offline 25d+; no smart plug (P12 removed 2026-07-16)
-  monitor: false         # retired from vault-standby role (Frank 2026-08-02); successors bes_slot + sobek_slot
+  status: active
+  power: on              # LIVE 2026-10-14: up 17d, ollama active; no smart plug (P12 removed 2026-07-16) so power recovery is PHYSICAL
+  monitor: true          # re-admitted 2026-10-14 (wq#3470): reassigned vault-standby -> inference node (wq#2448/wq#3784); stale park fired storage wadjet:unparked x489
 network:
   tailscale_ip: 100.116.217.15
   lan_ip: 192.168.8.173
@@ -17,9 +17,9 @@ hardware:
   gpu: []
   board: {model: VERIFY, bios: VERIFY, quirks: ""}
   power_hw: {psu_w: VERIFY, ups: VERIFY, plug_id: none, ac_restore: VERIFY, recovery: "PHYSICAL power-on (no plug)"}
-roles: []
-services: []
-serves: []
+roles: [inference]
+services: [ollama]
+serves: [wadjet-coder-14b, wadjet-embed]
 governance: {crown_jewel: false, never_restart: false, off_limits: false}
 ops:
   maint_tier: 3            # wq#1456: A11 §5 tier 3 (vault standby) per fleet-maint-assemble TIER3_STANDBY
